@@ -10,7 +10,7 @@
   var L = (g.Legacy = g.Legacy || {});
   var S = L.state, cfg = L.config;
   var UNLOCK_KEY = 'projectLegacyAdminUnlocked';
-  var PIN_HASH = 'aad0081bad98b2a7444359bc984b5293e9fb0eecab1eb54c79b8b7566cce3987';   // sha256('legacy-admin:' + PIN)
+  var PIN_HASH = 'f08de4fac598e2b9e73f9c49e6c27216c10d301d3424d00d9ba85cd36e8e0002';   // sha256('legacy-admin:' + PIN)
   var TEST_FLAG = 'legacyAdminTest', FEED_URL = 'legacyAdminFeedUrl', FEED_KEY = 'legacyAdminFeedKey';
 
   function ls(k, v) { try { if (v === undefined) return g.localStorage.getItem(k); if (v === null) g.localStorage.removeItem(k); else g.localStorage.setItem(k, v); } catch (e) { return null; } return null; }

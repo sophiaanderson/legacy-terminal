@@ -110,6 +110,12 @@
     root.appendChild(h('h1', { tabindex: '-1' }, 'ADMIN'));
     root.appendChild(h('p', null, h('a', { href: '#' }, '← Terminal'), ' · ', h('a', { href: '#organizer' }, 'Organizer panel')));
     root.appendChild(h('p.muted', null, 'For your phone. Nothing here changes Brian’s phone, except the rescue links you choose to send him.'));
+    // Private repo: only opens when Sophie is signed in to GitHub (everyone else gets a 404), so nothing here spoils anything.
+    var REPO = 'https://github.com/sophiaanderson/project-legacy/blob/main/';
+    root.appendChild(h('div.actions', null,
+      h('a.button', { href: REPO + 'docs/PROJECT-LEGACY-GUIDE.pdf', target: '_blank', rel: 'noopener' }, '📖 MASTER GUIDE (PDF)'),
+      h('a.button', { href: REPO + 'print/legacy-props.pdf', target: '_blank', rel: 'noopener' }, '🖨 PRINTABLE PROPS (PDF)')));
+    root.appendChild(h('p.muted', { style: 'margin-top:0' }, 'These open from your private GitHub repo. Sign in to GitHub (or use the GitHub app) to see them.'));
 
     // ---- 1. Rescue links ----
     root.appendChild(h('h2', null, '1 · RESCUE LINKS (TEXT TO BRIAN)'));
@@ -146,7 +152,7 @@
     // ---- 2. Answer sheet ----
     root.appendChild(h('h2', null, '2 · ANSWER SHEET + WHAT TO TEXT HIM'));
     if (!L.adminAnswers) {
-      root.appendChild(ui.notice('info', 'IN THE GUIDE', h('p', { style: 'margin:0' }, 'The answer sheet and what to text him are in the guide PDF (private repo → docs/PROJECT-LEGACY-GUIDE.pdf), not on this public site, so nothing here can spoil it.')));
+      root.appendChild(ui.notice('info', 'IN THE GUIDE', h('p', { style: 'margin:0' }, ['The answer sheet and what to text him are in the ', h('a', { href: REPO + 'docs/PROJECT-LEGACY-GUIDE.pdf', target: '_blank', rel: 'noopener' }, 'master guide PDF'), ', not on this public site, so nothing here can spoil it.'])));
     }
     var A = L.adminAnswers ? L.adminAnswers() : null;
     if (A) S.DAYS.forEach(function (d) {

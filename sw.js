@@ -1,7 +1,7 @@
 /* PROJECT LEGACY — offline cache.
  * After the first visit (over https), the whole app — including audio — works with no network.
  * Bump VERSION whenever any file changes so phones pick up the new copy. */
-var VERSION = 'legacy-v3.5';
+var VERSION = 'legacy-v3.6';
 var FILES = [
   './',
   'index.html',

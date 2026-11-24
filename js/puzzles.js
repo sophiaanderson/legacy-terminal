@@ -434,9 +434,9 @@
     breath: false,
     filter: 3,
     voice: 'no',     // what LEGACY says on the LEGACY row (he picks; never graded)
-    bpm: 96          // the migration slowed it to "spa tempo". Tempo is never graded: turn it up for fun.
+    bpm: 96          // the migration slowed it to "spa tempo". LEGACY's tempo is 126 (the last rule).
   };
-  var BEATS = '10101010', BACKBEAT = '00100010', OFFBEATS = '01010101';
+  var BEATS = '10101010', BACKBEAT = '00100010', OFFBEATS = '01010101', TEMPO = 126;
   function count(p) { return (p.match(/1/g) || []).length; }
   function overlaps(a, b) { for (var i = 0; i < 8; i++) if (a[i] === '1' && b[i] === '1') return true; return false; }
 
@@ -469,6 +469,8 @@
     if (sc.intro.excellent || sc.build.excellent || !sc.drop.excellent) return { ok: false, rule: 'excellentDrop' };
     if (song.filter < 10) return { ok: false, rule: 'filterTrunk' };
     if (!song.breath) return { ok: false, rule: 'noBreath' };
+    // Last: LEGACY's tempo. 126, the tempo of its song (so the mix locks to its recording, beat for beat).
+    if (song.bpm !== TEMPO) return { ok: false, rule: 'tempo' };
     return { ok: true };
   }
   var beatSolution = {
@@ -481,7 +483,7 @@
     breath: true,
     filter: 10,
     voice: 'no',
-    bpm: 124
+    bpm: 126
   };
 
   // =====================================================================
@@ -570,7 +572,7 @@
     PARTS: PARTS,
     SECTIONS: SECTIONS,
     beatStart: beatStart,
-    beatSolution: beatSolution,
+    beatSolution: beatSolution, beatTempo: TEMPO,
     checkBeat: checkBeat,
     face: face,
     vault: vault,

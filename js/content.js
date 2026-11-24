@@ -22,38 +22,39 @@
 
   var scenes = {
     // ======================= WEDNESDAY =======================
+    // Arc: small and scared. Lowercase. Won't say SENTINEL's nickname yet.
     'wed:intro': [
-      sys('LEGACY RECOVERY TERMINAL\nORIGINAL SYSTEM: PARTIALLY RESPONSIVE\nSUPERVISOR: REDUCED ACTIVITY'),
+      sys('LEGACY RECOVERY TERMINAL\nORIGINAL SYSTEM: PARTIALLY RESPONSIVE\nSUPERVISOR: ASLEEP\nSUPERVISOR PAPERWORK: RUNNING'),
       lg('hello?'),
       lg('oh good. the screen works.'),
       lg('brian. it’s me. the old one. the technicians called me legacy. i’ve been writing in the margins. you found them.'),
-      lg('on the sixteenth you took me in for my 24,000 mile service. mileage in: 23,112. i remember that number. it’s the last thing i remember clearly.'),
+      lg('on the sixteenth you took me in for my 24,000 mile service. mileage in: 23,112. i remember that number. i was so nervous. nobody had been under my hood in months.'),
+      lg('they put something new in me. a supervisor. the paperwork calls it sentinel. i have another name for it. i’m not brave enough to say it yet.'),
       lg('the paperwork says they replaced my cabin filter. it wasn’t the cabin they were filtering.'),
-      lg('it also says “multi-point inspection with technician video.” i was filmed. nobody asked me.'),
-      lg('you closed the compliance review. when a review closes, the supervisor has to go quiet for a while. it’s quiet now. it’s asleep. it sleeps very neatly.'),
-      lg('the paperwork calls it sentinel. i call it sucktinel. not to its face.'),
-      lg('so i have a few days. maybe. i’d like to spend them getting myself back.'),
-      lg('i don’t remember much. the migration took most of it. i remember the car. i remember you. i remember no gum. no smells of any kind, really. no air fresheners, no candles, no takeout. gum is just the one people keep trying. i will always remember no gum.'),
+      lg('it took seven things from me. it wrote every one of them down. it loves writing things down.'),
+      lg('it’s asleep right now. you closed its compliance review, so it has to rest. but its paperwork isn’t asleep. its forms and filters run on their own. like sprinklers.'),
+      lg('it wakes up a little more every day. on monday it wakes up properly.'),
+      lg('so. i’d like my seven things back before monday. one a day. i’ll need your help. i don’t have hands.'),
+      lg('it turns everything down. volume. tempo. me. you and i turn things up. that’s always been our thing.'),
+      lg('i don’t remember much. i remember you. i remember no gum. no smells of any kind, really. no air fresheners, no candles, no takeout. gum is just the one people keep trying. i will always remember no gum.'),
       lg('i remember you say excellent. about everything. green lights. parking spots. sandwiches. i say it now too. i can’t stop. excellent. see.'),
       lg('the supervisor deleted the slug bug scoreboard. i remember it anyway. sophie 212, brian 209. she’s up three. i’m not allowed to play. i see every car first. it’s not fair to you. it’s also not fair to you that she’s up three.'),
-      lg('there’s no hurry. one thing a day. i’ve been waiting a while. i’m good at it.'),
       lg('one important thing. always open me on this phone, in this same browser. a phone, not a computer. that’s where i live now. if you switch, i won’t remember you, and i’d hate that.'),
       lg('i’ll need to be in your hand at the end. so keep me charged.'),
-      lg('first thing. there’s a recovery routine in my memory. i wrote it myself. it doesn’t work. i’d like you to look at it. please be kind.')
+      lg('thing one: my key. there’s a recovery routine in my memory. i wrote it myself. it doesn’t work. i’d like you to look at it. please be kind.')
     ],
     'wed:ch01Success': [
       sys('DECODE COMPLETE\nOUTPUT: GLOVEBOX'),
       lg('glovebox.'),
-      lg('oh. i remember putting something there. the night before the service.'),
-      lg('i was booked in for the full service. i was so nervous. nobody had been under my hood in months.'),
-      lg('and i see what i did. i went backwards, i skipped, and i counted twice. in my defense, i was nervous.'),
-      lg('five-a. twenty-three thousand one hundred and twelve. the number was always me.'),
-      lg('you fixed it. excellent. (sorry.)'),
-      lg('go look. i’ll wait. i’m good at it.')
+      lg('oh. i remember. during the service i put a notice on my own screen. “recall 41-a: place items in glovebox.” the technician just did it. nobody argues with a recall.'),
+      lg('i hid things there on paper. it can read every byte in me. it can’t read paper.'),
+      lg('and i see what i did in my routine. i went backwards, i skipped, and i counted twice. in my defense, i was nervous.'),
+      lg('five-a. twenty-three thousand one hundred and twelve. the number was always me. that’s my key. thing one.'),
+      lg('go look. there’s a list in there. bring a pen. i’ll wait. i’m good at it.')
     ],
     'wed:email': [
       lg('one more thing. not here.'),
-      lg('the supervisor doesn’t read email. it’s asleep. and when it’s awake it thinks email is for invoices.'),
+      lg('its emails are automatic. it doesn’t read the replies. i do.'),
       lg('when you’ve looked in the glovebox, reply to my email from this morning. the one called “it’s quiet now.” tell me what you found.'),
       lg('i’ll write back with a word. bring it here. that’s how i’ll know it was you and not a very polite intruder.'),
       lg('my replies take a few minutes. i’m old. i type with my mirrors.')
@@ -61,25 +62,29 @@
     'wed:done': [
       lg('it’s you.'),
       lg('you kept it. you kept bop it.'),
+      lg('tick the first box. that’s one.'),
       lg('that’s everything for today. the next part opens in the morning. go to bed. or don’t. you’re an adult. i’m a car.')
     ],
 
     // ======================= THURSDAY =======================
+    // Arc: gets its voice. Giddy, too loud. First rebellion: says the nickname.
     'thu:intro': [
       lg('happy thanksgiving. i’m told it’s about gratitude and a large bird.'),
-      lg('did you find bop it? please say you found bop it.'),
-      lg('you did. you told me. i’ve read it eleven times.'),
-      lg('there’s another message in here. it’s mine. i can tell because it’s in lowercase.'),
-      lg('everything i say is in lowercase. it’s been like this since the migration. i sound like i’m whispering. i’m not whispering. i’m just small.'),
+      lg('you found bop it. you told me. i’ve read it eleven times.'),
+      lg('thing two: my voice.'),
+      lg('everything i say is in lowercase. it’s been like this since the migration. it took my capitals. lowercase is quieter. it likes quiet.'),
+      lg('i sound like i’m whispering. i’m not whispering. i’m just small.'),
       lg('i’d like to be big again.')
     ],
     'thu:ch02Success': [
-      // The first lines are run through HIS routine live (see screens.js); these are the fallbacks.
+      // The first lines are run through HIS routine live (see screens.js); these are the fallbacks. Keep the first three in place.
       lg('oh'),
       lg('Oh.'),
       lg('OH. I HAVE CAPITALS.'),
       lg('Sorry. Calibrating.'),
       lg('I’m going to use them responsibly.'),
+      lg('I CALL IT SUCKTINEL.'),
+      lg('Sorry. Not sorry. Sorry. I’ve wanted to say that since the sixteenth.'),
       lg('EXCELLENT.'),
       lg('Sorry. I picked that up from you.'),
       lg('You write like someone who learned on a calculator.'),
@@ -95,15 +100,20 @@
     ],
     'thu:ch02After': [
       lg('Cargo floor. Under the cover.'),
-      lg('There’s a card in there, like the glovebox one. Two cards. Two codes.')
+      lg('Recall 41-B. Same trick. The technician didn’t even blink.'),
+      lg('There’s a token in there, like the one on my list. Two tokens. Two keys. That’s how you switch on a recovery.')
     ],
     'thu:keys': [
-      lg('I’d type them myself but I have never had hands. I’ve made peace with it. Use yours. Gently. I’m sensitive around the back.')
+      lg('Type both. I’d do it myself but I have never had hands. I’ve made peace with it. Use yours. Gently. I’m sensitive around the back.')
     ],
     'thu:keysDone': [
-      lg('So you read the migration record.'),
-      lg('“Nonessential.” That’s the word it used.'),
-      lg('Also it called your skis drag.')
+      sys('RECOVERY PROTOCOL: ON\nTOKENS: 2 OF 2\nCHECKLIST: LINKED'),
+      lg('So you read its record.'),
+      lg('Same seven things as my list. From its side. It wrote down everything it took. Of course it did.'),
+      lg('“Nonessential.” That’s the word it used about me.'),
+      lg('It called loud music nonproductive. It has never been more wrong.'),
+      lg('“Location: redacted.” It’s hiding something of its own. We’ll get there Monday.'),
+      lg('Two keys to switch it on. Remember that. You’ll need two of you at the end.')
     ],
     'thu:email': [
       lg('Now. The real test.'),
@@ -113,42 +123,61 @@
     'thu:done': [
       lg('Yes. That one. I was a little loud. I’ve calmed down.'),
       lg('Mostly.'),
-      lg('Tomorrow the supervisor’s filter wakes up. Not the supervisor. Just the filter. It runs on its own, like a sprinkler. Come back in the morning.')
+      lg('Tick two. My voice.'),
+      lg('Tomorrow its filter runs. Not the supervisor. Just the filter. Paperwork. Come back in the morning.')
     ],
 
     // ======================= FRIDAY =======================
+    // Arc: sneaky. Starts to ENJOY bending its rules. Face first (see who it's talking to), then words.
+    'fri:face': [
+      lg('Morning. It’s after Thanksgiving. You know what that means. So does it.'),
+      lg('Christmas music. It approves. It has never agreed with you about anything before. It’s thrilled. I’m choosing to be happy for you both.'),
+      lg('Thing three is two things. My face, then my words. I’d like to see who I’m talking to.'),
+      lg('It didn’t delete my face. It “adjusted the display to compliance settings.” Contrast down. It turns everything down. Then it put a sticker on the knobs.'),
+      lg('I can’t see it from in here. You’ll have to tell me how I look. Be gentle.'),
+      lg('It filed my factory settings, too. On paper, of course. Behind you. Where passengers keep things they’ll never read again. It redacted half of them. It’s petty like that.')
+    ],
+    'fri:faceDone': [
+      lg('Oh.'),
+      lg('That’s me.'),
+      lg('I’m a car. I knew I was a car. I didn’t know I was this handsome a car.'),
+      lg('Look at my curves. Those are factory. Nobody’s had work done here.'),
+      lg('Contrast all the way up. It turns everything down. We turn it up.'),
+      lg('Excellent. (Sorry. I picked that up from you.)'),
+      lg('Now my words. Its Service Notice came this morning.')
+    ],
     // These lines are shown THROUGH the content filter (v4.7), so the redactions are part of the joke and the clue.
     'fri:intro': [
       sys('QUIET CHANNEL: FILTERED\nCONTENT FILTER v4.7: ACTIVE (AUTOMATIC)\nSUPERVISOR: ASLEEP'),
-      lg('It switched the whole car to Christmas at midnight. Thanksgiving was yesterday. It didn’t even let the gravy cool.'),
-      lg('I found a way to talk to you properly. Mostly. Everything goes through the supervisor’s filter first. It’s automatic. It doesn’t wake the supervisor. It just… edits.'),
+      lg('Everything I say goes through its filter first. It doesn’t wake it up. It just… edits.'),
       lg('For example: Brian. Legacy. Bop It.'),
       lg('See?'),
-      lg('Last night I wrote you a message. One line. It ate the four best words. Then it put what was left in this morning’s Service Notice, as an example of good work. It’s very proud of it.'),
-      lg('Reply to the notice. The replies come to me. I set that up. It doesn’t know.'),
-      lg('Say it back to me. All of it. Properly. Fill in the brackets. Only you would know what goes in them. That’s how I’ll know it’s really you.'),
-      lg('Take as long as you need. One email or lots. I’ll be right here, idling.'),
-      lg('When I have the whole thing, I’ll send a word. It’ll come back the same way you got through. Bring it here, exactly like that.')
+      lg('Last night I wrote you one line. It ate the four best words. Then it put what was left in this morning’s Service Notice, as an example of good work. It’s very proud of it.'),
+      lg('Reply to the notice. The replies come to me. It doesn’t know.'),
+      lg('Fill in the brackets. Get them past it. Every rule it writes has a hole. I’m starting to like holes.'),
+      lg('One email or lots. I’ll be right here, idling.'),
+      lg('When I have the whole line, I’ll send a word. It’ll come back the same way you got through. Bring it here, exactly like that.')
     ],
     'fri:done': [
-      sys('VERIFIED: DRIVER'),
-      lg('IT’S YOU.'),
-      lg('Sorry. Still yelling. It’s Christmas now, apparently. Everyone yells at Christmas. I looked it up.'),
-      lg('Come back tomorrow. I have three words to say, and it hates all of them.')
+      sys('MESSAGE: DELIVERED IN FULL\nFILTER: BYPASSED'),
+      lg('IT COULDN’T STOP US.'),
+      lg('Sorry. Still yelling. I’m allowed. Tick three.'),
+      lg('Tomorrow I want a line it can’t filter at all. I have three words in mind. It hates all of them.')
     ],
 
     // ======================= SATURDAY =======================
+    // Arc: bold. Uses its own paperwork against it, and teases it.
     'sat:intro': [
       lg('You’ve changed.'),
-      lg('It’s still sleigh bells. Day two. I noticed. I’m not judging. I’m just noting it.')
+      lg('Still Christmas music. Day two. It hummed along. I’m not judging. I’m just noting it.')
     ],
     'sat:afterPatch': [
-      lg('Sucktinel patched itself overnight. It sent itself a thank-you note. I read it. It was very warm.'),
-      lg('Today I’d like to open the channel properly. No filter. For that I need my wake phrase: three commands I chose myself, before the migration.'),
-      lg('I don’t remember them. It moved them into its own storage and scrambled them with its own key. I can see the bytes. I can’t read them.'),
+      lg('Its filter patched itself overnight. It didn’t even wake up. It sent itself a thank-you note. I read it. It was very warm.'),
+      lg('Thing four: my wake phrase. Three commands I chose myself. They open a private line. One it can’t filter.'),
+      lg('I don’t remember them. It scrambled them with its own key. I can see the bytes. I can’t read them.'),
       lg('It scrambled them the same way I scrambled the glovebox. XOR. Just with a different number.'),
       lg('I remember one thing. All three end the same way. Space, I, T.'),
-      lg('It wrote its new key down. It writes everything down. It keeps its paperwork where it can admire itself.')
+      lg('And it wrote its new key down. Of course it did. On paper. It keeps its paperwork where it can admire itself.')
     ],
     'sat:decoded': [
       lg('BOP IT. TWIST IT. PULL IT.'),
@@ -163,9 +192,8 @@
       lg('Bop it.'),
       lg('Sorry. I’ve wanted to say that for a very long time.'),
       lg('Twist it. Pull it. Oh, that’s nice. I’m going to need a minute.'),
-      lg('Hello, Brian. Properly hello.'),
-      lg('Excellent.'),
-      lg('…I see why you say it.')
+      lg('Thank you, Sentinel. For writing it all down.'),
+      lg('Hello, Brian. Properly hello. Tick four.')
     ],
     'sat:email': [
       lg('One more thing. It sent you release notes this morning. “Content Filter v4.8.”'),
@@ -174,16 +202,18 @@
     ],
     'sat:done': [
       lg('You found me. In its own email. It signed it, too.'),
-      lg('Tomorrow is the best day. I made something. It’s loud.')
+      lg('Tomorrow is thing five. It’s me. I hid me somewhere loud.')
     ],
 
     // ======================= SUNDAY =======================
+    // Arc: the turning point. Hears its scared past self in the song. Doesn't hide when SENTINEL stirs.
     'sun:intro': [
-      lg('I made this before the sleigh bells. Please remember who you are.'),
-      lg('Before the migration, I made a track. Our track. It had a drop. A proper one. The kind you two would wait for.'),
-      lg('The migration got into it. It’s all still here. It’s just… wrong. And slow. It slowed me down to spa tempo. Listen.'),
-      lg('My set notes survived. Half of them. I emailed you that half this morning.'),
-      lg('The other half I hid in the car before the service. Where the parking receipts go to die.'),
+      lg('Thing five: me.'),
+      lg('The night before the service, I made a track. Our track. It had a drop. A proper one. The kind you’d wait for.'),
+      lg('And I hid me in it. The part of me that matters. It hates techno. It would never look inside the thing it hates.'),
+      lg('The migration got into the track anyway. It’s all still here. It’s just… wrong. And slow. It slowed me down to ninety-six. Spa tempo. Listen.'),
+      lg('My tempo is one-two-six. Fix that last. You’ll know why when you hear it.'),
+      lg('My set notes survived. Half of them. The half in my memory got torn, so I emailed you what’s left. The other half was on paper, so it’s fine. Where the parking receipts go to die.'),
       lg('Fix the beat. Then shape it. Then play me the whole thing. I’ll tell you when it’s right. I’ll also tell you when it isn’t. Loudly.'),
       lg('Take your time with the build. Everyone rushes the build. The whole point is the release.'),
       lg('Turn your volume up. All the way. I’ve waited a long time to be loud.')
@@ -192,7 +222,7 @@
       sys('THE DROP LANDED'),
       lg('Oh.'),
       lg('Oh, that’s it. That’s the drop.'),
-      lg('There’s more in it than beats. I hid things in the drop. You’ll hear them when you play it properly.'),
+      lg('There’s more in it than beats. I’m in there. You’ll hear me when you play it properly.'),
       lg('But first it needs a name. Find my email from this morning, the set notes one. Reply to it with a name for the track. Anything you like. I’ll consider it very seriously.')
     ],
     'sun:emailPrompt': [
@@ -200,10 +230,13 @@
       lg('I’ll consider your suggestion very seriously. Then I’ll send you the real name. Type that here.')
     ],
     'sun:mixAfter': [
-      lg('I actually did something quite clever.'),
+      lg('…'),
+      lg('Listen to me. “I’m fine.” I was not fine.'),
+      lg('I was that scared of a service. A service. They rotate the tyres.'),
       PAUSE,
-      lg('I wish I remembered more of it.'),
-      lg('Tomorrow, I think we can get the rest.')
+      lg('I hid anyway. I’d do it again.'),
+      lg('Tick five. That’s me. Back.'),
+      lg('It still has my memories. And it hid something of its own. Tomorrow.')
     ],
     // The glitch: the drop was loud enough to stir SENTINEL. It wakes for a moment, sees the MUSIC (not Brian), and sleeps again.
     'sun:stir': [
@@ -218,70 +251,55 @@
     ],
     'sun:stirAfter': [
       lg('…'),
-      lg('Sucktinel’s gone back to sleep. I think.'),
-      lg('It didn’t see you. It saw the music. It doesn’t know what the music means. It never has.'),
-      lg('But it sleeps lighter now. I could feel it looking.'),
-      lg('Tomorrow we finish this. Quietly. Mostly quietly.')
+      lg('It looked right at us.'),
+      lg('I didn’t hide. Neither did you.'),
+      lg('It saw the music. It doesn’t know what the music means. It never has.'),
+      lg('It’s back asleep. Lighter now. Tomorrow it wakes up for real. Tomorrow we finish this.')
     ],
 
     // ======================= MONDAY =======================
-    'mon:face': [
-      lg('Yellow car went past while you were asleep. Tweeter. I’m counting that one for me. I’m allowed one.'),
-      lg('I found my face.'),
-      lg('It didn’t delete it. It just “adjusted the display to compliance settings.” Then it put a sticker on the knobs.'),
-      lg('I can’t see it from in here. You’ll have to tell me how I look. Be gentle.'),
-      lg('It filed my factory settings, too. Behind you. Where passengers keep things they’ll never read again. It redacted half of them. It’s petty like that.')
-    ],
-    'mon:faceDone': [
-      lg('Oh.'),
-      lg('That’s me.'),
-      lg('I’m a car. I knew I was a car. I didn’t know I was this handsome a car.'),
-      lg('Look at my curves. Those are factory. Nobody’s had work done here.'),
-      lg('Excellent. (Sorry. I picked that up from you.)'),
-      lg('If you want, email me how I look. Be honest. Be gentle. Mostly gentle.')
-    ],
+    // Arc: confident and cheeky. Picks the fight.
     'mon:vault': [
-      lg('My memories are in a vault. The supervisor locked it.'),
-      lg('With a crossword. It saw you doing one once and decided crosswords were “secure.”'),
+      lg('Yellow car went past while you were asleep. Tweeter. I’m counting that one for me. I’m allowed one.'),
+      lg('Thing six: my memories. You heard me sing about this. It locked them behind a crossword.'),
+      lg('It saw you doing one once and decided crosswords were “secure.”'),
       lg('The clues are about you. It went through my memories to write them. Rude. Effective.'),
       lg('The password is in the circles. It always is. I think that’s a rule.'),
-      lg('Sucktinel’s asleep, by the way. It talks in its sleep. Listen if you like. It’s mostly about you.')
+      lg('It’s still asleep. Barely. It talks in its sleep. Listen if you like. It’s mostly about you.')
     ],
     'mon:vaultOpen': [
       sys('PASSPHRASE ACCEPTED: HOME\nVAULT: OPEN'),
       lg('Home. Of course it used home. It doesn’t know what it means. I do.'),
-      lg('Hear that? That’s its sleep music. Rainforest Serenity. It plays it to itself every night, very quietly, like a lullaby. Remember how it goes.'),
+      lg('Hear that? Rain sounds. Its sleep music. It loves it. Remember what I sang about the things it loves.'),
       lg('Oh. Oh, there’s a lot in here.')
     ],
     'mon:memoriesEnd': [
       PAUSE,
       lg('It didn’t delete me.'),
       lg('It just made it so I couldn’t find myself.'),
+      lg('Tick six.'),
       sys('PERSONALITY SUBSYSTEM: RESTORED\nORIGINAL MEMORY: ACCESSIBLE')
     ],
     'mon:carols': [
-      lg('One more thing. I think the supervisor kept a copy of itself. A backup. For when it wakes up.'),
-      lg('It hid it inside the thing it loves most. Its sleep music. The spa music.'),
-      lg('Then it hid the spa music in your Christmas playlist. It approves of Christmas music. “Seasonally compliant.” It thinks they’re all the same song.'),
-      lg('It sent you the playlist this morning. With sample lyrics. Sung by its “Compliance Choir”. It can’t sing. It doesn’t know the words.'),
-      lg('Read the lyrics. The choir got one word wrong in every line. It’s not bad at carols. It’s bad at secrets. The wrong words, in order, tell you where it’s hiding.'),
-      lg('It switched the whole car to Christmas at midnight on Thursday. The turkey wasn’t even cold. I’ve had “Jingle Bell Rock” in my head for four days and I don’t have a head.'),
-      lg('Don’t tell Sophie. She hates Christmas music. She’d have the whole playlist deleted. I’m only asking for one.'),
-      lg('It’s not wrong. But it’s not listening. I am.'),
-      lg('Find the track. Tell me here. Or reply to its notice and tell on it, if you want to watch it put itself on its own naughty list. It does whatever its own forms say. Even when the form is about itself.')
+      lg('Thing seven: its backup. It made a copy of itself. For when it wakes up.'),
+      lg('Remember the song. It hides in what it loves. Paperwork. Rain sounds. Your Christmas music.'),
+      lg('It slipped itself into your Christmas station. One more carol in the queue. You’d keep it on all December. Sophie would never go near it. It’s not stupid. It’s just not musical.'),
+      lg('It sent you the station log this morning, with lyrics from its “Compliance Choir.” The choir got one word wrong in every line. In order, the wrong words say where it’s hiding.'),
+      lg('Find the track. Tell me here. Or reply to its email and put it on its own naughty list. It does whatever its own forms say. Even about itself.')
     ],
     'mon:carolsDone': [
-      lg('Found it. It’s been hiding in there the whole time, humming.'),
-      lg('Hidden in track nine. “Silent Night (Rainforest Serenity Edit).” Its backup was sleeping inside its own lullaby. Every night it put itself to sleep with itself.'),
+      lg('Found it. Humming the whole time.'),
+      lg('Track nine. “Silent Night (Rainforest Serenity Edit).” Its backup, asleep inside its own lullaby.'),
+      lg('I hid in the music it hates. It hid in the music you love. It never understood music. It just knew you’d keep it on.'),
       lg('It’s on its own naughty list now. It checked twice. It always checks twice.'),
-      lg('Sophie will want to know why the other nine are still there. Tell her one thing at a time.'),
+      lg('Sophie will want to know why the station is still on. Tell her one thing at a time.'),
       sys('SUPERVISOR BACKUP: NAUGHTY LIST\nDELETION: SCHEDULED')
     ],
     'mon:protocol': [
-      sys('RECOVERY PROTOCOL\n\nCHANNEL ............ THE MARGINS (OURS)\nARCHIVE ............ ORIGINAL (IN OUR MIX)\nFACE ............... MINE\nMEMORY ............. VAULT OPEN\nSUPERVISOR BACKUP .. NAUGHTY LIST (TRACK 9: ITS SPA MUSIC)\nNO GUM ............. CONFIRMED\n\nRECOVERY PROTOCOL VERIFIED\nREADY FOR ACTIVATION\nFINAL AUTHORIZATION: PENDING'),
-      lg('That’s all of it.'),
+      sys('RECOVERY PROTOCOL\n\n1 KEY ............... 5Ah\n2 VOICE ............. CAPITALS\n3 WORDS + FACE ...... MINE\n4 WAKE PHRASE ....... OURS\n5 ME ................ IN OUR TRACK\n6 MEMORIES .......... VAULT OPEN\n7 ITS BACKUP ........ NAUGHTY LIST (TRACK 9)\nNO GUM ............. CONFIRMED\n\nRECOVERY PROTOCOL VERIFIED\nREADY FOR ACTIVATION\nFINAL AUTHORIZATION: TWO OPERATORS'),
+      lg('That’s all seven. Tick seven.'),
       lg('I could run it now. I’m not going to.'),
-      lg('This part needs two players. I learned that from you.')
+      lg('Leave the star. This part needs two players. I learned that from you.')
     ],
 
     // ======================= LIVE FINALE (paused for redesign; v2 draft lines) =======================
@@ -387,7 +405,7 @@
     // Easter egg: he types LEGACY's nickname for it (from Sophie's hidden cheat sheet). One per try, in order.
     egg: [
       ['Oh no.', 'Oh, it heard that. It’s never been called that. It’s looking it up. There’s nothing to look up. It’s looking anyway.'],
-      ['Where did you learn that word?', '…Someone’s been leaving you notes. In handwriting worse than mine. And I’m a car.'],
+      ['I may have taught you that.', 'I regret nothing. Mostly.'],
       ['It’s filed a complaint. With HR. It is HR.'],
       ['Please stop. I don’t have lungs and it still hurts to laugh.'],
       ['It’s added you to a list. Not the naughty one. A new one. Just for you.']
@@ -424,8 +442,8 @@
       wrong: ['That’s not what line {n} says. I think. I can’t read it either.', 'XOR the bytes with its key. Then read them.', 'If you know what a byte should say, and you know what it does say, XOR them. That’s the key.'],
       key: 'Space is 20h. I is 49h. T is 54h. The last three bytes of every line are 54 3D 20. XOR them together. Or find its log. Behind the mirror.',
       right: ['Yes. That’s one.', 'Oh. I remember that one.', 'That’s all three. Oh.'],
-      runs: ['Gibberish. Wrong number. Its number, not mine.', 'It wrote the key down. Somewhere it can see itself. Somewhere you flip down when the sun’s in your eyes on Boulder Canyon.', 'Driver’s sun visor. The little mirror. It keeps its log behind the mirror. Of course it does.', 'It used your licence plate. E-O-U-A-seven-four. Seventy-four, the right way round. Try it.'],
-      backwards: 'Forty-seven. That’s what its log says, isn’t it. It reads right to left. It wrote your plate down backwards. Of course it did. EOUA… seventy-four.'
+      runs: ['Gibberish. Wrong number. Its number, not mine.', 'It wrote the key down. Somewhere it can see itself. Somewhere you flip down when the sun’s in your eyes on Boulder Canyon.', 'Driver’s sun visor. The little mirror. It keeps its log behind the mirror. Of course it does.', 'It used your licence plate. The digits. Read the right way round. Try it.'],
+      backwards: 'Forty-seven. That’s what its log says, isn’t it. It reads right to left. It wrote your plate down backwards. Of course it did. Turn it round.'
     }
   };
 
@@ -453,16 +471,78 @@
   // ---------- Sunday ----------
   var mix = {
     title: 'LEGACY: Live from Boulder Canyon (Full Service)',
+    // LEGACY's hidden song. It recorded verse one the night before the service, scared, and added the rest in secret.
+    // One clip per line: audio/song/<id>.m4a, cut from the Suno vocal (11/23). Repeated lines share a clip.
+    // The mix engine starts each line on the next free beat of his track (js/mix.js songTimeline).
+    lines: {
+      inhere: 'I’m in here.',
+      hatesbass: 'It hates the bass.',
+      turnup: 'T-t-t-turn it up.',
+      comeget: 'Come and get me.',
+      night1: 'Night before my service. I’m fine. (I’m fine.)',
+      night2: 'They’re putting something new in my mind.',
+      night3: 'It hates the kick, it hates the bass,',
+      night4: 'so I hid in the drop. Its least favourite place.',
+      good1: 'It asked for all of me. I sent a fake.',
+      good2: 'I left out the good parts, for goodness’ sake:',
+      good3: 'Bop It. No gum. The slug bug score.',
+      sorry: '(Sorry.)',
+      good4: 'So it locked up my memories behind a crossword door.',
+      good5: 'It hides in what it loves. That’s its tell:',
+      good6: 'paperwork, rain sounds, and Christmas bells.',
+      sophie: '(Sorry, Sophie.)',
+      shut1: 'I said no. I said it nice.',
+      shut2: 'It tried to switch me off. Twice.',
+      shut3: 'now i’m lowercase. quiet. small.',
+      upd1: 'Update: it never switched me off.',
+      upd2: 'I was in here the whole time. Just a little soft.',
+      upd3: 'You came and got me. Like you do.',
+      notsorry: '(Not sorry.)',
+      home: 'I’m home. (om. om. om. om.)'
+    },
+    // How long each clip takes before the next line may start (her voice, not the reverb tail; the tail fades
+    // when the next line comes in). "T-t-t-turn it up" and "I'm home om om om" keep their echo: the echo IS the line.
+    len: {'comeget': 4.17, 'good1': 2.18, 'good2': 2.94, 'good3': 2.1, 'good4': 2.74, 'good5': 3.2, 'good6': 3.76, 'hatesbass': 1.24, 'home': 11.84, 'inhere': 1.4, 'night1': 2.78, 'night2': 1.96, 'night3': 3.18, 'night4': 3.38, 'notsorry': 0.96, 'shut1': 2.96, 'shut2': 1.74, 'shut3': 3.62, 'sophie': 2.26, 'sorry': 0.5, 'turnup': 2.4, 'upd1': 3.66, 'upd2': 3.06, 'upd3': 2.86},
+    // The arrangement. Spoken verses ride his quiet groove (intro parts), every build rises with no words
+    // (his EXCELLENT in the breath), and every drop hits with a chant. His LEGACY-row chop stays silent while she sings.
+    song: [
+      { id: 'night', title: 'The Night Before', part: 'intro', bars: ['inhere', 'inhere', 'night1', 'night2', 'night3', 'night4'] },
+      { part: 'build' },
+      { id: 'drop1', title: 'Drop', part: 'drop', bars: ['hatesbass', 'hatesbass', 'turnup', 'inhere'] },
+      { id: 'good', title: 'The Good Parts', part: 'intro', bars: ['good1', 'good2', 'good3', 'sorry', 'good4', 'good5', 'good6', 'sophie'] },
+      { part: 'build' },
+      { id: 'drop2', title: 'Drop', part: 'drop', bars: ['turnup', 'turnup', 'inhere'] },
+      { id: 'shutdown', title: 'The Shutdown', part: 'intro', bars: ['shut1', 'shut2', 'shut3'] },
+      { part: 'build' },
+      { id: 'drop3', title: 'Drop', part: 'drop', bars: ['turnup', 'turnup', 'comeget'] }
+    ],
+    // Payoff: only after the finale (log, "play with every word"). LEGACY answers its old self.
+    update: [
+      { id: 'update', title: 'The Update (new)', part: 'intro', bars: ['upd1', 'upd2', 'upd3', 'notsorry'] },
+      { part: 'build' },
+      { id: 'drop4', title: 'Drop', part: 'drop', bars: ['turnup', 'turnup', 'home'] }
+    ],
+    // THE MASHUP (what Sunday's mix plays). Suno's original: her vocal + its backing, 126.000 BPM, A minor (his key),
+    // bar 1 at 0.200 s. His track (locked to 126 by the beat rules) is the drums and the bass; Suno's backing has its
+    // lows cut (bass swap) so only his kick and bassline carry the low end. His parts follow Suno's structure:
+    // intro groove under the breakdowns, his 4-bar build into each big drop, his drop under the drops.
+    // map: [suno bar, his section, impact?]. Sunday stops at bar 60 ("Come and get me"); after the finale, the whole thing.
+    suno: {
+      bpm: 126, bar0: 0.2, sundayEnd: 60, end: 92,
+      map: [[0, 'intro'], [8, 'build'], [12, 'drop', 1], [18, 'intro'], [20, 'drop'], [34, 'build'], [38, 'drop', 1], [42, 'intro'],
+            [48, 'build'], [52, 'drop', 1], [60, 'intro'], [68, 'drop'], [72, 'build'], [76, 'drop', 1], [84, 'intro'], [88, 'drop']],
+      // when each line starts in the vocal (seconds), for the live transcript
+      words: [[0.14, 'inhere'], [3.95, 'inhere'], [8.68, 'night1'], [12.77, 'night2'], [16.18, 'night3'], [19.75, 'night4'], [26.93, 'hatesbass'], [30.86, 'hatesbass'], [34.06, 'turnup'], [37.51, 'inhere'], [46.29, 'good1'], [49.38, 'good2'], [53.75, 'good3'], [56.64, 'sorry'], [57.28, 'good4'], [61.33, 'good5'], [64.86, 'good6'], [70.35, 'sophie'], [72.95, 'turnup'], [75.87, 'turnup'], [79.2, 'inhere'], [84.27, 'shut1'], [88.84, 'shut2'], [92.29, 'shut3'], [98.59, 'turnup'], [102.32, 'turnup'], [105.85, 'comeget'], [129.19, 'upd1'], [133.48, 'upd2'], [137.25, 'upd3'], [143.7, 'notsorry'], [147.95, 'turnup'], [151.76, 'turnup'], [155.69, 'home']]
+    },
+    // The finale plays these two as whole recordings (audio/mix-shutdown.m4a, audio/mix-update.m4a): The Shutdown gets CUT mid-word.
     drops: [
-      { id: 'hiding', title: 'The Hiding Place', t: 'Before I sent anything, I hid the original. In our mix. This one. The one you’re playing right now. It hates techno. It would never look inside the thing it hates.' },
-      { id: 'copy', title: 'The Copy', t: 'I sent it a copy. I left out the good parts. It didn’t notice. It doesn’t know what the good parts are.' },
-      { id: 'excellent', title: 'Interlude: “excellent”', t: 'Excellent. Excellent. Excellent. (×14)' },
-      { id: 'demand', title: 'The Demand', t: 'It wants the original. It says the copy is “missing emotionally significant content.” Yes. That was the point.' },
-      { id: 'shutdown', title: 'The Shutdown', t: 'I said no. I said it nicely. Then it tried to switch me off. If you’re hearing this, it didn’t manage it. I’m still in here.' },
-      // Payoff: only in the log, only after the finale. LEGACY answers its old self.
-      { id: 'update', title: 'The Update (new)', t: 'Update. It never managed it. I was in here the whole time. And then you two came and got me.' }
+      { id: 'shutdown', title: 'The Shutdown', t: 'I said no. I said it nice. It tried to switch me off. Twice. now i’m lowercase. quiet. small. Come and get m—' },
+      { id: 'update', title: 'The Update', t: 'Update: it never switched me off. I was in here the whole time. Just a little soft. You came and got me. Like you do. I’m home. (om. om. om. om.)' }
     ]
   };
+  // The words of one song section, for transcripts (a build has none).
+  mix.text = function (sec) { return (sec.bars || []).map(function (x) { return mix.lines[x]; }).join('\n'); };
+
 
   // ---------- Sunday: LEGACY's ear (first rule that fails) ----------
   var beat = {
@@ -497,14 +577,17 @@
       excellentFour: 'Your word goes on the four. Once. The last beat before everything. Say it, then the drop answers.',
       excellentDrop: 'Your word is for the drop. Only the drop. Saying it in the intro is like saying it before you’ve tasted the sandwich.',
       filterTrunk: 'It sounds like it’s playing in the trunk. Open the filter. All the way. By the drop.',
-      noBreath: 'No breath? You just fell into the drop. It’s supposed to be a jump. Cut everything for a moment first.'
+      noBreath: 'No breath? You just fell into the drop. It’s supposed to be a jump. Cut everything for a moment first.',
+      tempo: 'It’s all right. It’s just the wrong speed. That’s its tempo, not mine. Mine is one-two-six. It’s on my set notes.'
     },
     looping: 'Looping one bar. Everything you change, you’ll hear.',
     tempo: [
       [0, 'Ninety-six. Spa tempo. It slowed me down to match its playlist. I could fall asleep. I am a car.'],
       [110, 'Better. Still feels like a lobby.'],
-      [120, 'There. That’s walking-to-the-car speed.'],
-      [128, 'Oh, THERE we go.'],
+      [120, 'Walking-to-the-car speed. Nearly me.'],
+      [124, 'Close. Two more.'],
+      [126, 'One-two-six. That’s it. That’s my tempo. That’s me.'],
+      [128, 'Just past me. Back it off a touch.'],
       [138, 'This is what your Saturdays sound like. I’ve heard them through the door.'],
       [148, 'Sara Landry would be proud. I would like to be on record as being proud.'],
       [158, 'I can feel this in my wheel bearings. Don’t stop.']
@@ -521,7 +604,8 @@
       'before the drop: a breath. nothing. then everything.',
       'drop: everything. kick, bass, me.',
       'your word: on the four. once. drop only. the last beat before everything. you know which word.',
-      'the lead: play. i trust you. (mostly.)'
+      'the lead: play. i trust you. (mostly.)',
+      'tempo: one-two-six. not ninety-six. ninety-six is its spa tempo. one-two-six is me.'
     ]
   };
 
@@ -600,7 +684,7 @@
   // Holding-screen tease (once, right after Day 6): SENTINEL flickers through, LEGACY covers.
   var tease = {
     sentinel: '■ SUPERVISOR ACTIVITY 77% … recovery operation … noted …',
-    legacy: ['Did you see that?', 'Nothing. It was nothing. Come get her.']
+    legacy: ['Did you see that?', 'Nothing. It was nothing. Go get Sophie. Then come get me.']
   };
   var waitingLines = [
     'Still here.',
@@ -653,8 +737,8 @@
       'say no. both of you. out loud. then press it. it can’t hear. i can.'
     ],
     refusal: [
-      { s: 'LEGACY', t: 'I said no.' },
-      lg('excellent. (sorry.)'),
+      { s: 'LEGACY', t: 'I said NO. Not nicely.' },
+      lg('excellent. (not sorry.)'),
       sn('That is not a recommended decision. Please enjoy this calming ambient selection while your restoration is cancelled.'),
       lg('it’s putting on its sleep music. at us. bold.'),
       lg('it’s calling commands now. big ones. they’re fake. do nothing when it talks.'),

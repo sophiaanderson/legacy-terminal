@@ -166,6 +166,8 @@
       else if (w.kind === 'locked') content = L.screens.locked({ store: store, advance: advance }, w.day);
       else if (w.kind === 'finale-ready') content = L.screens['finale-ready']({ store: store, advance: advance });
       else content = L.screens[w.step]({ store: store, advance: advance });
+      // The recovery checklist sits under the heading on every day screen (from Thursday's two tokens on).
+      if (!paused && (w.kind === 'step' || w.kind === 'locked') && L.checklist) { var cl = L.checklist(store.state); if (cl && content.firstChild) content.insertBefore(cl, content.firstChild.nextSibling); }
       if (RM && !paused) {
         if (L.replay && w.kind === 'step') {
           // Replay: today's email on screen (email steps carry their own inbox + reply box), and the car props.

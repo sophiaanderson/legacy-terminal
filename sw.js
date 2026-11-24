@@ -1,7 +1,7 @@
 /* PROJECT LEGACY — offline cache.
  * After the first visit (over https), the whole app — including audio — works with no network.
  * Bump VERSION whenever any file changes so phones pick up the new copy. */
-var VERSION = 'legacy-v3.6';
+var VERSION = 'legacy-v3.7';
 var FILES = [
   './',
   'index.html',
@@ -38,10 +38,32 @@ var FILES = [
   'audio/chop-car.m4a',
   'audio/chop-tweeter.m4a',
   'audio/chop-beep.m4a',
-  'audio/mix-hiding.m4a',
-  'audio/mix-copy.m4a',
-  'audio/mix-excellent.m4a',
-  'audio/mix-demand.m4a',
+  'audio/song/backing.m4a',
+  'audio/song/vocal.m4a',
+  'audio/song/comeget.m4a',
+  'audio/song/good1.m4a',
+  'audio/song/good2.m4a',
+  'audio/song/good3.m4a',
+  'audio/song/good4.m4a',
+  'audio/song/good5.m4a',
+  'audio/song/good6.m4a',
+  'audio/song/hatesbass.m4a',
+  'audio/song/home.m4a',
+  'audio/song/inhere.m4a',
+  'audio/song/night1.m4a',
+  'audio/song/night2.m4a',
+  'audio/song/night3.m4a',
+  'audio/song/night4.m4a',
+  'audio/song/notsorry.m4a',
+  'audio/song/shut1.m4a',
+  'audio/song/shut2.m4a',
+  'audio/song/shut3.m4a',
+  'audio/song/sophie.m4a',
+  'audio/song/sorry.m4a',
+  'audio/song/turnup.m4a',
+  'audio/song/upd1.m4a',
+  'audio/song/upd2.m4a',
+  'audio/song/upd3.m4a',
   'audio/mix-shutdown.m4a',
   'audio/mix-update.m4a',
   'audio/finale-home.m4a'

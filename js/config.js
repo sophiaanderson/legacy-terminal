@@ -74,13 +74,14 @@
     audio: {
       chop: 'audio/chop-no.m4a?v=5',
       chopExcellent: 'audio/chop-excellent.m4a?v=5',
-      mixHiding: 'audio/mix-hiding.m4a?v=2',
-      mixCopy: 'audio/mix-copy.m4a',
-      mixExcellent: 'audio/mix-excellent.m4a',
-      mixDemand: 'audio/mix-demand.m4a',
-      mixShutdown: 'audio/mix-shutdown.m4a?v=2',
+      // LEGACY's hidden song, one clip per line (ids: js/content.js mix.lines). Bump songVersion after re-recording.
+      songDir: 'audio/song/',
+      songVersion: 4,
+      sunoBacking: 'audio/song/backing.m4a?v=1',   // Suno's instrumental (the mashup's top end)
+      sunoVocal: 'audio/song/vocal.m4a?v=1',       // her whole performance, in Suno's timing
+      mixShutdown: 'audio/mix-shutdown.m4a?v=4',      // finale: The Shutdown as one recording (it gets cut)
       finaleHome: 'audio/finale-home.m4a',  // finale, last line: "Thank you. I'm home. And I'm whole."
-      mixUpdate: 'audio/mix-update.m4a?v=2',      // log only, after the finale: the answer to The Shutdown
+      mixUpdate: 'audio/mix-update.m4a?v=4',      // finale: LEGACY's live answer to The Shutdown
       // Sunday: what LEGACY says on the LEGACY row (he picks). Labels + quips: js/content.js beat.voices
       voices: {
         no: 'audio/chop-no.m4a?v=5',

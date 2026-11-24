@@ -472,7 +472,7 @@
         function later(ms, fn) { dt.push(g.setTimeout(fn, ms)); }
         engine = { stop: function () { dt.forEach(g.clearTimeout); L.mix.stop(); } };
         if (hasAudio) L.mix.playTrack(song, { dropOnly: true, bars: 8, clips: clips() });
-        var SHUT = 8.8, UPD = 6.8;                          // clip lengths (s), with a little air
+        var SHUT = (L.mix.duration('shutdown') || 8.8) + 0.1, UPD = (L.mix.duration('update') || 8.5) + 0.4;   // clip lengths (s), with a little air
         later(4500, function () {                           // the music cuts out: the recording, alone
           L.mix.stop();
           rest.appendChild(h('pre.readout', null, F3.shutdownHead));

@@ -9,10 +9,10 @@
   var DAYS = [
     { id: 'wed', title: 'Emergency message', steps: ['intro', 'ch01', 'emailWed'] },
     { id: 'thu', title: 'Capitals', steps: ['ch02', 'keys', 'emailThu'] },
-    { id: 'fri', title: 'Say my name', steps: ['emailFri'] },
+    { id: 'fri', title: 'Face and words', steps: ['face', 'emailFri'] },
     { id: 'sat', title: 'The arms race', steps: ['channel', 'emailSat'] },
     { id: 'sun', title: 'The drop', steps: ['beat', 'emailSun', 'mix', 'stir'] },
-    { id: 'mon', title: 'Memory', steps: ['face', 'vault', 'emailMon', 'protocol'] }
+    { id: 'mon', title: 'Memory', steps: ['vault', 'emailMon', 'protocol'] }
   ];
   var STEPS = [];
   DAYS.forEach(function (d) { d.steps.forEach(function (s) { STEPS.push(s); }); });
@@ -207,10 +207,10 @@
     var pz = s.puzzles;
     if (dayId === 'wed') pz.ch01.source = P.ch01.fixedSource;
     if (dayId === 'thu') { pz.ch02.source = P.ch02.solutionSource; pz.ch02.instructions = 14; pz.keys.glovebox = pz.keys.cargofloor = true; }
-    if (dayId === 'fri' && !pz.fri.exploit) pz.fri.exploit = 'caps';
+    if (dayId === 'fri') { if (!pz.fri.exploit) pz.fri.exploit = 'caps'; pz.face = { v: 6, h: 4, i: 6, c: 10 }; }
     if (dayId === 'sat') { pz.sat.got = { BOP: true, TWIST: true, PULL: true }; pz.sat.decoded = { BOP: true, TWIST: true, PULL: true }; }
     if (dayId === 'sun') { pz.beat = JSON.parse(JSON.stringify(P.beatSolution)); }
-    if (dayId === 'mon') { pz.face = { v: 6, h: 4, i: 6, c: 10 }; pz.vault = { haunted: true, boulder: true, emperor: true, seattle: true, open: true }; pz.memories = 99; }
+    if (dayId === 'mon') { pz.vault = { haunted: true, boulder: true, emperor: true, seattle: true, open: true }; pz.memories = 99; }
     d.steps.forEach(function (st) { solve(s, st); ack(s, st); });
   }
 
@@ -219,7 +219,7 @@
     if (!d) return;
     var fresh = defaultPuzzles();
     d.steps.forEach(function (st) { s.done[st] = false; s.acked[st] = false; });
-    var map = { wed: ['ch01'], thu: ['ch02', 'keys'], fri: ['fri'], sat: ['sat'], sun: ['beat'], mon: ['face', 'vault', 'memories', 'sleepTalk'] };
+    var map = { wed: ['ch01'], thu: ['ch02', 'keys'], fri: ['face', 'fri'], sat: ['sat'], sun: ['beat'], mon: ['vault', 'memories', 'sleepTalk'] };
     (map[dayId] || []).forEach(function (k) { s.puzzles[k] = fresh[k]; });
     Object.keys(s.seen).forEach(function (k) { if (k.indexOf(dayId + ':') === 0) delete s.seen[k]; });
     s.finaleReadyAt = 0;

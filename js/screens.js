@@ -559,7 +559,40 @@
   // ================= SUNDAY: build the drop =================
   var PART_LABEL = { kick: 'KICK', clap: 'CLAP', hats: 'HATS', bass: 'BASS', legacy: 'LEGACY', excellent: 'EXCELLENT', lead: 'LEAD' };
   var SECTION_LABEL = { intro: 'INTRO · 4 BARS', build: 'BUILD · 4 BARS · RISER', drop: 'DROP' };
-  function clips() { var a = cfg.audio, o = { chop: a.chop, excl: a.chopExcellent, hiding: a.mixHiding, copy: a.mixCopy, excellent: a.mixExcellent, demand: a.mixDemand, shutdown: a.mixShutdown, update: a.mixUpdate }, v = L.mix.voiceClips(); Object.keys(v).forEach(function (k) { o[k] = v[k]; }); return o; }
+  function clips() {
+    var a = cfg.audio, o = { chop: a.chop, excl: a.chopExcellent, shutdown: a.mixShutdown, update: a.mixUpdate, 'suno:backing': a.sunoBacking, 'suno:vocal': a.sunoVocal }, v = L.mix.voiceClips();
+    Object.keys(v).forEach(function (k) { o[k] = v[k]; });
+    Object.keys(C.mix.lines).forEach(function (id) { o['song:' + id] = a.songDir + id + '.m4a' + (a.songVersion ? '?v=' + a.songVersion : ''); });
+    return o;
+  }
+  // LEGACY's song: Suno's original (vocal + backing) beat-matched over his track. If those two recordings aren't
+  // decoded yet (or can't be), fall back to the line clips laid over his own intro/build/drop. Lines appear as sung.
+  function playSong(song, full, hd) {
+    L.mix.preload(clips());
+    var su = C.mix.suno, barSec = 240 / su.bpm, cut = su.sundayEnd * barSec + su.bar0, shown = 0;
+    var words = su.words.filter(function (w) { return full || w[0] < cut; });
+    var ok = L.mix.playMashup(song, su, { full: full,
+      onBar: function (b) { var until = (b.n + 1) * barSec + su.bar0; while (shown < words.length && words[shown][0] < until) hd.onLine(words[shown++][1]); if (hd.onBar) hd.onBar(b); },
+      onEnd: hd.onEnd, onError: hd.onError });
+    if (ok) return true;
+    return L.mix.playTrack(song, { clips: clips(), story: songSections(full), lens: C.mix.len,
+      onBar: function (b) { (b.events || []).forEach(function (e) { hd.onLine(e.line); }); if (hd.onBar) hd.onBar(b); },
+      onEnd: hd.onEnd, onError: hd.onError });
+  }
+  function songWords(full) {      // every sung line, in order (for SHOW ME EVERY WORD)
+    var su = C.mix.suno, cut = su.sundayEnd * 240 / su.bpm + su.bar0;
+    return su.words.filter(function (w) { return full || w[0] < cut; }).map(function (w) { return w[1]; });
+  }
+  function lyricBox() {
+    var box = h('div.transcript', null, h('span.tlabel', null, 'IN THE DROP: LEGACY'));
+    return { el: box, add: function (id) { box.appendChild(h('p', { style: 'margin:0' }, C.mix.lines[id])); } };
+  }
+  // The song he hears: LEGACY's verses (plus, after the finale, its answer).
+  function songSections(withUpdate) { return withUpdate ? C.mix.song.concat(C.mix.update) : C.mix.song; }
+  function songTranscript(sec) {
+    return h('div.transcript', null, h('span.tlabel', null, 'IN THE DROP: ' + sec.title.toUpperCase()),
+      h('p', { style: 'margin:0;white-space:pre-line' }, C.mix.text(sec).replace(/▸ EXCELLENT/g, '▸ EXCELLENT (yours)').replace(/^▸$/gm, '▸ (your voice)')));
+  }
   function setNotes() {
     // Shown only in the test version (the real notes arrive by email).
     if (!L.testMode) return null;
@@ -636,7 +669,7 @@
       a.appendChild(h('p.muted', { style: 'margin:0.2rem 0 0' }, 'Tap to change what I say on the LEGACY row. It speeds up with the tempo. EXCELLENT goes in the breath, right before the drop.'));
       a.appendChild(vTalk);
 
-      // Tempo: just for fun, never graded.
+      // Tempo: the last rule is LEGACY’s tempo, 126 (so the mix locks to its recording).
       var tempoTalk = h('div', { 'aria-live': 'polite' });
       var tval = h('span.val', null, String(song.bpm));
       var trange = h('input', { type: 'range', id: 'tempo-knob', min: '80', max: '160', step: '2', value: String(song.bpm) });
@@ -650,7 +683,7 @@
       tdn.addEventListener('click', function () { setT(song.bpm - 2); });
       tup.addEventListener('click', function () { setT(song.bpm + 2); });
       trange.addEventListener('input', function () { setT(+trange.value); });
-      a.appendChild(h('div.knob', null, h('label', { for: 'tempo-knob' }, 'TEMPO (BPM) · JUST FOR FUN'), tval, h('div.ctl', null, tdn, trange, tup)));
+      a.appendChild(h('div.knob', null, h('label', { for: 'tempo-knob' }, 'TEMPO (BPM)'), tval, h('div.ctl', null, tdn, trange, tup)));
       a.appendChild(tempoTalk);
 
       var loop = h('button', { type: 'button' }, '▶ LOOP THE BEAT');
@@ -748,21 +781,17 @@
     var now = h('p', { 'aria-live': 'polite', style: 'font-family:var(--mono);font-weight:700' }, 'YOUR BEAT. MY DROP. TURN IT UP.');
     var play = h('button.primary', { type: 'button' }, '▶ PLAY THE MIX');
     var stop = h('button.quiet', { type: 'button', disabled: true }, '■ STOP');
-    var story = ['hiding', 'copy', 'excellent', 'demand', 'shutdown'];
-    var heard = h('div');
-    var shown = {};
-    function reveal(i) {
-      if (i < 0 || shown[i]) return;
-      shown[i] = true;
-      var d = C.mix.drops[i];
-      heard.appendChild(h('div.transcript', null, h('span.tlabel', null, 'IN THE DROP: ' + d.title.toUpperCase()), h('p', { style: 'margin:0' }, d.t)));
-    }
+    var heard = h('div'), lyr = null, all = false;
+    function addLine(id) { if (!lyr) { lyr = lyricBox(); heard.appendChild(lyr.el); } lyr.add(id); }
+    function showAllWords() { if (all) return; all = true; ui.clear(heard); lyr = null; songWords(false).forEach(addLine); }
+    L.mix.preload(clips());          // decode the recordings while he reads
     play.addEventListener('click', function () {
-      var ok = L.mix.playTrack(song, {
-        clips: clips(), story: story,
-        onBar: function (b) { now.textContent = 'NOW: ' + b.section.toUpperCase(); if (b.storyIndex >= 0) reveal(b.storyIndex); },
-        onEnd: function () { now.textContent = 'END OF SET.'; play.disabled = false; stop.disabled = true; for (var i = 0; i < story.length; i++) reveal(i); },
-        onError: function () { now.textContent = 'Audio isn’t available here. Every word is below.'; for (var i = 0; i < story.length; i++) reveal(i); }
+      ui.clear(heard); lyr = null; all = false;
+      var ok = playSong(song, false, {
+        onLine: function (id) { if (!all) addLine(id); },
+        onBar: function (b) { now.textContent = 'NOW: ' + (b.section === 'intro' ? 'GROOVE' : b.section.toUpperCase()); },
+        onEnd: function () { now.textContent = 'END OF SET.'; play.disabled = false; stop.disabled = true; showAllWords(); },
+        onError: function () { now.textContent = 'Audio isn’t available here. Every word is below.'; showAllWords(); }
       });
       if (ok) { play.disabled = true; stop.disabled = false; }
     });
@@ -771,7 +800,7 @@
     root.appendChild(now);
     root.appendChild(heard);
     var showAll = h('button.quiet', { type: 'button' }, 'SHOW ME EVERY WORD');
-    showAll.addEventListener('click', function () { for (var i = 0; i < story.length; i++) reveal(i); showAll.remove(); });
+    showAll.addEventListener('click', function () { showAllWords(); showAll.remove(); });
     root.appendChild(h('div.actions', null, showAll));
     if (!s.done.mix) S.solve(s, 'mix');
     root.appendChild(h('div', { style: 'margin-top:2rem' }, scene(ctx, 'sun:mixAfter', C.scenes['sun:mixAfter'], function (act) {
@@ -864,7 +893,7 @@
     var KN = [{ id: 'v', label: 'V-HOLD' }, { id: 'h', label: 'H-HOLD' }, { id: 'i', label: 'INTERLACE' }, { id: 'c', label: 'CONTRAST' }];
     var inputs = {}, said = {}, stampStep = 0;
     function mod(a, n) { return ((a % n) + n) % n; }
-    var pic = F.expressions.frown;   // Monday: the face frowns (the smile is saved for the end of the finale)
+    var pic = F.expressions.frown;   // Friday: the face frowns (the smile is saved for the end of the finale)
     function src(x, y) { var fx = x - PADX, fy = y - PADY; if (fx < 0 || fy < 0 || fx >= W || fy >= H) return 0; return pic[fy][fx] === '#' ? 1 : 0; }
     function tone(v, gain) { return Math.max(0, Math.min(1, 0.5 + (v - 0.5) * gain)); }
     function colour(t) { var a = [11, 15, 12], b = [143, 227, 160]; return 'rgb(' + a.map(function (c, k) { return Math.round(c + (b[k] - c) * t); }).join(',') + ')'; }
@@ -922,7 +951,7 @@
       sticker.classList.add('void');
       ui.clear(doneWrap);
       doneWrap.appendChild(ui.statusBoard('DISPLAY CALIBRATED', null, [['FACE', 'RESTORED'], ['STAMP', 'NONE']]));
-      doneWrap.appendChild(scene(ctx, 'mon:faceDone', C.scenes['mon:faceDone'], function (a) { a.appendChild(ackButton(ctx, 'face')); }));
+      doneWrap.appendChild(scene(ctx, 'fri:faceDone', C.scenes['fri:faceDone'], function (a) { a.appendChild(ackButton(ctx, 'face')); }));
       talk.textContent = 'Oh.';
     }
     function build() {
@@ -942,7 +971,7 @@
       if (s.done.face) win(); else talk.textContent = FC.start;
     }
     // Built last: if the intro was already seen, onDone runs immediately and needs everything above defined.
-    root.appendChild(scene(ctx, 'mon:face', C.scenes['mon:face'], function (a) {
+    root.appendChild(scene(ctx, 'fri:face', C.scenes['fri:face'], function (a) {
       a.appendChild(h('div.bezel', null, canvas, caption));
       a.appendChild(h('div.line.legacy', null, h('span.who', null, 'LEGACY'), talk));
       a.appendChild(sticker);
@@ -1159,7 +1188,7 @@
       var w = cfg.emailWords[d.id];
       if (d.id === 'wed') ref.push(['Your fixed routine', h('pre.readout', null, s.puzzles.ch01.source || '(not saved)')]);
       if (d.id === 'thu') { ref.push(['Your uppercase routine' + (s.puzzles.ch02.instructions ? ' · ' + s.puzzles.ch02.instructions + ' instructions' : ''), h('pre.readout', null, s.puzzles.ch02.source || '(not saved)')]); ref.push(['LEGACY’s original · ' + P.ch02.legacyCount + ' instructions', h('pre.readout', null, P.ch02.legacySource)]); ref.push(['Recovery cards', cfg.keys.glovebox + ' (glovebox) · ' + cfg.keys.cargofloor + ' (cargo floor)']); }
-      if (d.id === 'fri') { ref.push(['Your trick', TRICK_NAME[s.puzzles.fri.exploit] || 'ALL CAPS']); w = 'VERIFIED'; }
+      if (d.id === 'fri') { var fc = s.puzzles.face; ref.push(['Face settings', 'V ' + fc.v + ' · H ' + fc.h + ' · I ' + fc.i + ' · C ' + fc.c]); ref.push(['Your trick', TRICK_NAME[s.puzzles.fri.exploit] || 'ALL CAPS']); w = 'VERIFIED'; }
       if (d.id === 'sat') ref.push(['Wake phrase', P.wakePhrase.join(' · ')]);
       if (d.id === 'sun') {
         var song = s.puzzles.beat, playing = h('span.audio-status', { 'aria-live': 'polite' }, '');
@@ -1169,10 +1198,8 @@
         plainB.addEventListener('click', function () { ui.clear(heardBox); if (L.mix.playTrack(song, { clips: clips(), onEnd: function () { playing.textContent = 'End of set.'; } })) playing.textContent = 'Playing your mix.'; });
         msgB.addEventListener('click', function () {
           ui.clear(heardBox);
-          var story = ['hiding', 'copy', 'excellent', 'demand', 'shutdown'];
-          if (s.finale.completed) story.push('update');          // the payoff: LEGACY answers The Shutdown
-          if (L.mix.playTrack(song, { clips: clips(), story: story,
-            onBar: function (b) { if (b.storyIndex >= 0) { var dd = C.mix.drops[b.storyIndex]; heardBox.appendChild(h('div.transcript', null, h('span.tlabel', null, 'IN THE DROP: ' + dd.title.toUpperCase()), h('p', { style: 'margin:0' }, dd.t))); } },
+          var lb = lyricBox(); heardBox.appendChild(lb.el);
+          if (playSong(song, !!s.finale.completed, { onLine: lb.add,       // after the finale: the whole song, with LEGACY's answer
             onEnd: function () { playing.textContent = 'End of set.'; } })) playing.textContent = 'Playing with LEGACY’s messages in the drop.';
         });
         loopB.addEventListener('click', function () { ui.clear(heardBox); if (L.mix.loopBeat(function () { return song; }, { clips: clips() })) playing.textContent = 'Looping the beat.'; });
@@ -1180,8 +1207,6 @@
         ref.push(['Your track', h('div', null, h('p', { style: 'margin:0 0 0.4rem' }, C.mix.title + ' · ' + song.bpm + ' BPM'), h('div.actions', null, plainB, msgB), h('div.actions', null, loopB, stopB), playing, heardBox)]);
       }
       if (d.id === 'mon') {
-        var fc = s.puzzles.face;
-        ref.push(['Face settings', 'V ' + fc.v + ' · H ' + fc.h + ' · I ' + fc.i + ' · C ' + fc.c]);
         ref.push(['Crossword', P.vault.map(function (q) { return String(q.accept).replace(/[^A-Z]/g, ''); }).join(' · ') + ' → ' + P.vaultPass]);
         ref.push(['Memories', h('div', null, C.memories.map(function (m) { return ui.renderBeat({ s: 'LEGACY', t: m }); }))]);   // silent: no blip storm
       }
@@ -1200,6 +1225,25 @@
     if (L.replayMode && L.replayMode.available(s)) root.appendChild(L.replayMode.startPanel());
     return root;
   }
+
+  // ================= THE RECOVERY CHECKLIST =================
+  // The same seven lines as the glovebox card (LEGACY's list) and the cargo-floor record (SENTINEL's). Shown at the top
+  // of every day once both tokens are in (Thursday: "recovery protocol on"). Ticks are derived from progress, never stored.
+  var CHECKLIST = [
+    ['MY KEY', 'Wed', ['ch01']], ['MY VOICE', 'Thu', ['ch02']], ['MY WORDS + MY FACE', 'Fri', ['face', 'emailFri']],
+    ['MY WAKE PHRASE', 'Sat', ['channel']], ['ME', 'Sun', ['mix']], ['MY MEMORIES', 'Mon', ['vault']], ['ITS BACKUP', 'Mon', ['emailMon']]
+  ];
+  function checklist(s) {
+    if (!s.done.keys) return null;
+    var n = 0, lines = CHECKLIST.map(function (c, i) {
+      var ok = c[2].every(function (st) { return s.done[st]; }); if (ok) n++;
+      var label = (i + 1) + '. ' + c[0] + ' ';
+      return (ok ? '☑ ' : '☐ ') + label + new Array(Math.max(2, 24 - label.length)).join('.') + ' ' + c[1];
+    });
+    lines.push('☐ ★  RUN IT. TOGETHER. ... Mon, at pickup');
+    return h('div.checklist', null, ui.details('RECOVERY CHECKLIST · ' + n + ' OF 7', h('pre.readout', null, lines.join('\n')), false));
+  }
+  L.checklist = checklist;
 
   L.screens = {
     log: logScreen,

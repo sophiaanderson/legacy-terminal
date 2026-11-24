@@ -146,10 +146,20 @@
     g.setTimeout(function () { try { a.currentTime = 0; a.playbackRate = rate; var p = a.play(); if (p && p.catch) p.catch(function () {}); if (maxDur) g.setTimeout(function () { a.pause(); }, maxDur * 1000); } catch (e) {} }, Math.max(0, (t - ac.currentTime) * 1000));
   }
 
+  /** A line of LEGACY's song. The previous line's reverb tail fades as this one starts, so lines stay tight. */
+  var lastSong = null;
+  function songVoice(name, t, inDrop) {
+    if (lastSong) { try { lastSong.gain.setTargetAtTime(0, t, 0.04); } catch (e) { /* ignore */ } lastSong = null; }
+    if (!buffers[name]) { voice(name, t, 30, 1.8); return; }   // not decoded yet: plain clip (a maxDur also means no duck)
+    var s = ac.createBufferSource(), gn = ac.createGain();
+    s.buffer = buffers[name]; gn.gain.value = 1.8; s.connect(gn).connect(master); s.start(t);
+    lastSong = gn;                          // no ducking: her voice sits on top of his track at full volume
+  }
+
   // ---------- scheduling ----------
   // Each bar: { section, parts, song, riser, impact, story, storyIndex, buildBar (0-3 or -1), dropBar (-1 or n), loop }
-  function schedule(planFn) {
-    var t = ac.currentTime + 0.12, bar = 0, step = 0;
+  function schedule(planFn, t0) {
+    var t = t0 || ac.currentTime + 0.12, bar = 0, step = 0;
     timer = g.setInterval(function () {
       if (!ac) return;
       var horizon = ac.currentTime + 0.2;
@@ -174,10 +184,10 @@
           } catch (e) { /* ignore */ }
           if (b.riser) riser(t, BAR * 4);
           if (b.impact) impact(t);
-          if (b.story) voice(b.story, t + 0.05, 0, 1.8);
           if (listeners && listeners.onBar) (function (bb, at) { g.setTimeout(function () { if (playing && listeners && listeners.onBar) listeners.onBar(bb); }, Math.max(0, (at - ac.currentTime) * 1000)); })(b, t);
         }
         if (listeners && listeners.onStep) { try { listeners.onStep(t, step, bar, STEP); } catch (e) { /* ignore */ } }
+        if (b.events) b.events.forEach(function (ev) { if (ev.step === step) songVoice(ev.name, t + 0.02, b.drop); });
         // The breath: last half-bar of the build is silence.
         var silent = b.section === 'build' && b.buildBar === 3 && song.breath && step >= 4;
         // EXCELLENT lands in the breath on BEAT 4 (step 7): the stressed syllable on a beat, "-cellent" as the pickup
@@ -197,6 +207,8 @@
           // EXCELLENT (on its grid step, beat 4): every bar while looping; drop-only loop: last bar of the phrase (pickup
           // into the impact); in the track it plays in THE BREATH (below), or on the drop's first bar if he skipped the breath.
           if (on('excellent') && (b.loop || (b.sectionLoop && b.section === 'drop' ? b.dropBar === 3 : (b.dropBar === 0 && !song.breath)))) voice('excl', t, 0.8, 1.8, vr);
+          // The song: his EXCELLENT gets its own bar (beat 4), and LEGACY answers it on the next line.
+          if (b.excl && step === 6) voice('excl', t, 0.8, 1.8, vr);
           // Snare roll in the build: 2, 4, 8, 16 hits per bar, getting louder.
           if (b.section === 'build' && b.buildBar >= 0) {
             var per = [2, 4, 8, 16][b.buildBar], sub = per / 8, vol = 0.18 + 0.12 * b.buildBar;
@@ -246,7 +258,90 @@
     return true;
   }
 
-  /** The whole track: 4 bars intro, 4 bars build, drop (8 bars; with story, 4 bars per recording). */
+  /** Pure: LEGACY's hidden song laid over HIS track (no audio needed, so it's testable).
+   *  sections: [{ part: 'intro' | 'build' | 'drop', bars: [lineId, ...] }]. Spoken verses ride his intro groove,
+   *  each build is his 4-bar build with no words (riser, snare roll, filter sweep, the breath + his EXCELLENT),
+   *  each drop hits with a chant. Lines start on the next free BEAT: never sped up, never pitch-shifted, never
+   *  overlapping. lenOf(id) = seconds before the next line may start (her voice; the reverb tail is faded when the
+   *  next line comes in). Every section rounds up to a multiple of 4 bars. His LEGACY-row chop is off throughout.
+   *  Returns the list of bars; a bar's .events = [{ name, step, si, line }] to start inside it. */
+  function songTimeline(song, sections, lenOf) {
+    var stepSec = 60 / Math.max(70, Math.min(170, song.bpm || BPM)) / 2, bars = [];
+    function noVoice(p) { var o = {}; Object.keys(p).forEach(function (k) { o[k] = p[k]; }); o.legacy = false; return o; }
+    sections.forEach(function (sec, si) {
+      if (sec.part === 'build') {
+        for (var b = 0; b < 4; b++) bars.push({ section: 'build', parts: noVoice(song.sections.build), song: song, riser: b === 0, buildBar: b, dropBar: -1, storyIndex: -1 });
+        return;
+      }
+      var drop = sec.part === 'drop', parts = noVoice(drop ? song.sections.drop : song.sections.intro);
+      var cursor = drop ? 8 : (si === 0 ? 8 : 4), events = {};          // drops: let the impact land first
+      (sec.bars || []).forEach(function (id) {
+        var st = Math.ceil(cursor / 2) * 2, len = Math.max(2, Math.ceil(((lenOf(id) || 1.6) + 0.05) / stepSec));
+        (events[Math.floor(st / 8)] = events[Math.floor(st / 8)] || []).push({ name: 'song:' + id, step: st % 8, si: si, line: id });
+        cursor = st + len;
+      });
+      var n = Math.max(drop ? 8 : 4, Math.ceil((cursor + (drop ? 8 : 4)) / 8));
+      n = Math.ceil(n / 4) * 4;
+      for (var i = 0; i < n; i++) bars.push({ section: drop ? 'drop' : 'intro', parts: parts, song: song, impact: drop && i === 0,
+        buildBar: -1, dropBar: drop ? i : -1, storyIndex: sec.bars ? si : -1, events: events[i] || null, drop: drop });
+    });
+    return bars;
+  }
+
+  /** Pure: his track laid over Suno's structure (see content mix.suno). Returns the list of bars.
+   *  His LEGACY row and EXCELLENT stay silent: the words are hers. Builds are his 4-bar builds (riser, snare roll,
+   *  filter sweep, the breath). Drops marked with impact hit on their first bar. */
+  function mashupBars(song, suno, endBar) {
+    var bars = [];
+    function quietVoices(p) { var o = {}; Object.keys(p).forEach(function (k) { o[k] = p[k]; }); o.legacy = false; o.excellent = false; return o; }
+    for (var n = 0; n < endBar; n++) {
+      var k = 0; while (k + 1 < suno.map.length && suno.map[k + 1][0] <= n) k++;
+      var m = suno.map[k], sec = m[1], i = n - m[0];
+      bars.push({ section: sec, parts: quietVoices(song.sections[sec]), song: song, n: n, riser: sec === 'build' && i === 0,
+        buildBar: sec === 'build' ? i : -1, dropBar: sec === 'drop' ? (m[2] ? i : i + 1) : -1, impact: sec === 'drop' && !!m[2] && i === 0 });
+    }
+    return bars;
+  }
+
+  /** Sunday's mix: Suno's vocal + backing (lows cut: bass swap) beat-matched over his track at 126 BPM, phrase-aligned.
+   *  opts: { full (play past Sunday's end, after the finale), onBar, onEnd, onError }. Returns false if the
+   *  recordings aren't decoded yet (the caller falls back to playTrack with the line clips). */
+  function playMashup(song, suno, opts) {
+    opts = opts || {};
+    if (!ensure()) { if (opts.onError) opts.onError(); return false; }
+    if (!buffers['suno:backing'] || !buffers['suno:vocal']) return false;
+    stop();
+    playing = true; mode = 'mashup'; listeners = opts;
+    var s126 = JSON.parse(JSON.stringify(song)); s126.bpm = suno.bpm;
+    var endBar = opts.full ? suno.end : suno.sundayEnd, barSec = 240 / suno.bpm;
+    var bars = mashupBars(s126, suno, endBar), t0 = ac.currentTime + 0.25, tEnd = t0 + endBar * barSec;
+    mashSources = [];
+    [['suno:backing', 0.9, true], ['suno:vocal', 1.5, false]].forEach(function (c) {
+      var src = ac.createBufferSource(), gn = ac.createGain(), node = src;
+      src.buffer = buffers[c[0]];
+      if (c[2]) { var hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 170; hp.Q.value = 0.7; src.connect(hp); node = hp; }
+      node.connect(gn).connect(master);
+      gn.gain.setValueAtTime(c[1], t0); gn.gain.setValueAtTime(c[1], tEnd - 0.35); gn.gain.linearRampToValueAtTime(0.0001, tEnd);
+      src.start(t0, suno.bar0); src.stop(tEnd + 0.05);
+      mashSources.push(src);
+    });
+    schedule(function (n) { return bars[n] || null; }, t0);
+    return true;
+  }
+  var mashSources = [];
+
+  function clipDur(name) {
+    if (buffers[name]) return buffers[name].duration;
+    var a = htmlClips[name]; return a && isFinite(a.duration) && a.duration > 0 ? a.duration : 0;
+  }
+
+  /** The whole track: 4 bars intro, 4 bars build, then the drop (8 bars).
+   *  With opts.story (LEGACY's hidden song: [{ bars: [lineId | '>' | '>X', ...] }, ...]) the drop carries the song:
+   *  two bars of his drop, then one line per free downbeat. A line clip ('song:' + id) that runs past a bar holds the
+   *  next downbeat too, so lines never overlap or drift at any tempo, and are never sped up or pitch-shifted.
+   *  '>'  = a bar for HIS voice chop (his LEGACY row, exactly as he programmed it).
+   *  '>X' = his EXCELLENT, on beat 4 of that bar. Then two bars of his drop to finish.
+   *  The drop is planned bar by bar while it plays: by then (16 bars in) every clip has loaded and its length is known. */
   function playTrack(song, opts) {
     stop();
     if (!ensure()) { if (opts && opts.onError) opts.onError(); return false; }
@@ -261,21 +356,14 @@
     for (i = 0; i < 4; i++) bars.push({ section: 'intro', parts: song.sections.intro, song: song, buildBar: -1, dropBar: -1 });
     for (i = 0; i < 4; i++) bars.push({ section: 'build', parts: song.sections.build, song: song, riser: i === 0, buildBar: i, dropBar: -1 });
     var story = (opts && opts.story) || [];
-    var dropParts = song.sections.drop;
-    if (story.length) { dropParts = {}; Object.keys(song.sections.drop).forEach(function (k) { dropParts[k] = song.sections.drop[k]; }); dropParts.legacy = false; }
-    // Each recording gets as many bars as it needs (at least 4), so none talk over each other.
-    var barSec = 60 / Math.max(70, Math.min(170, song.bpm || BPM)) * 4, at = {}, pos = 2;
-    story.forEach(function (name, k) {
-      at[pos] = k;
-      var dur = buffers[name] ? buffers[name].duration : (htmlClips[name] && isFinite(htmlClips[name].duration) ? htmlClips[name].duration : 11);
-      pos += Math.max(4, Math.ceil((dur + 0.8) / barSec));
-    });
-    var dropBars = story.length ? pos + 2 : 8;
-    for (i = 0; i < dropBars; i++) {
-      var k2 = story.length && (i in at) ? at[i] : -1, s = k2 >= 0 ? story[k2] : null;
-      bars.push({ section: 'drop', parts: i < 2 ? song.sections.drop : dropParts, song: song, impact: i === 0, story: s, storyIndex: k2, buildBar: -1, dropBar: i });
+    if (story.length) {                // LEGACY's song: the whole arrangement replaces the plain intro/build/drop
+      var lens = (opts && opts.lens) || {};
+      var tl = songTimeline(song, story, function (id) { return lens[id] || clipDur('song:' + id); });
+      schedule(function (n) { return tl[n] || null; });
+    } else {
+      for (i = 0; i < 8; i++) bars.push({ section: 'drop', parts: song.sections.drop, song: song, impact: i === 0, buildBar: -1, dropBar: i });
+      schedule(function (n) { return bars[n] || null; });
     }
-    schedule(function (n) { return bars[n] || null; });
     return true;
   }
 
@@ -308,6 +396,7 @@
   function stop() {
     playing = false; mode = null;
     if (songSrc) { try { songSrc.stop(); } catch (e) {} songSrc = null; }
+    mashSources.forEach(function (x) { try { x.stop(); } catch (e) {} }); mashSources = []; lastSong = null;
     if (timer) g.clearInterval(timer);
     timer = 0;
     Object.keys(htmlClips).forEach(function (k) { try { htmlClips[k].pause(); } catch (e) {} });
@@ -498,6 +587,7 @@
             ctx: function () { return ensure() ? ac : null; }, out: function () { return comp; },
             /** Play a loaded voice clip now (e.g. the "I said no." chop). */
             voiceClips: voiceClips, note: note, playBuffer: playBuffer, loopSection: loopSection,
+            duration: clipDur, songTimeline: songTimeline, mashupBars: mashupBars, playMashup: playMashup,
             say: function (name, maxDur) { if (ensure()) voice(name, ac.currentTime + 0.02, maxDur || 0, 1.8); },
             spaPlaying: function () { return !!spaState; },
             /** Let the spa keep playing through the next stop() (e.g. a screen change that re-renders). */

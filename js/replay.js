@@ -81,6 +81,11 @@
     if (!L.bot) return null;
     var m = L.bot.morning(day), from = SENTINEL_DAYS[day] ? 'Compliance Module v4.7' : 'LEGACY';
     var wrap = h('div.inbox');
+    // Wednesday: the night-before teaser (Tue 11/24) sits above the morning email, as it did in his real inbox.
+    if (day === 'wed' && L.bot.teaser) {
+      var tz = L.bot.teaser();
+      wrap.appendChild(h('details.inbox-details', null, h('summary', null, '📧 THE NIGHT BEFORE · ' + tz.subject), emailCard('Compliance Module v4.7', tz.subject, tz.body)));
+    }
     var details = h('details.inbox-details', { open: opts.open ? true : null },
       h('summary', null, '📧 INBOX · ' + m.subject), emailCard(from, m.subject, m.body));
     wrap.appendChild(details);

@@ -1,8 +1,14 @@
-/* =========================================================================
- *   BRIAN.
- *   STEP AWAY FROM THE CODE. SOLVE USING YOUR BRAIN.
- *   (the answers are in here. that would be cheating. LEGACY is watching.)
- * ========================================================================= */
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — configuration.
  * Everything Sophie might want to change lives here. */
 (function (g) {
@@ -82,6 +88,12 @@
       mixShutdown: 'audio/mix-shutdown.m4a?v=4',      // finale: The Shutdown as one recording (it gets cut)
       finaleHome: 'audio/finale-home.m4a',  // finale, last line: "Thank you. I'm home. And I'm whole."
       mixUpdate: 'audio/mix-update.m4a?v=4',      // finale: LEGACY's live answer to The Shutdown
+      // Monday vault: SENTINEL talking in its sleep, one robot clip per murmur (audio/sleep/s00.m4a … ; text: content.js sleepTalk)
+      sleepDir: 'audio/sleep/',
+      // SENTINEL's lullaby "Compliant Night (Serenity Edit)" (Suno, 11/24): its sleep music (looped instrumental) + the sung version
+      nightLoop: 'audio/night/sleep-loop.m4a?v=1',
+      nightSong: 'audio/night/song.m4a?v=1',
+      sleepVersion: 1,
       // Sunday: what LEGACY says on the LEGACY row (he picks). Labels + quips: js/content.js beat.voices
       voices: {
         no: 'audio/chop-no.m4a?v=5',

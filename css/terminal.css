@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — recovered diagnostic terminal.
  * Accessibility notes: base text 20px (scalable), controls ≥ 52px tall, single column,
  * minimal animation (the Saturday glitch flashes on purpose; organizer OK'd it), high contrast, state never shown by colour alone. */
@@ -495,3 +506,10 @@ dl.log-ref pre.readout { font-size: 0.8rem; max-height: 14rem; overflow: auto; }
 .inbox-reply { width: 100%; }
 .prop-note { white-space: pre-wrap; font-style: italic; border-left: 3px solid var(--line); padding-left: 0.75rem; }
 .replay-start { margin-top: 1.5rem; }
+
+/* Organizer-only replay toolbar (js/app.js adminReplayBar; only with the PIN bundle) */
+.admin-bar { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; padding: 0.4rem 0.6rem; margin: 0 0 0.5rem;
+  background: #2a2410; border: 2px solid var(--warn); color: var(--warn); font-family: var(--mono); font-size: 0.8rem; }
+.admin-bar-tag { letter-spacing: 0.08em; font-weight: bold; margin-right: 0.3rem; }
+.admin-bar button { min-height: 36px; min-width: 0; padding: 0.15rem 0.55rem; font-size: 0.78rem; border-color: var(--warn); color: var(--warn); }
+.admin-bar button.here { background: var(--warn); color: #000; }

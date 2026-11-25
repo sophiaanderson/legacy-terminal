@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — the boss song (round 5), kept ON THE FINALE DEVICE ONLY.
  * The Confidence Man track is copyrighted, so it never goes on the public site. Sophie loads the MP3 once
  * (Organizer → BOSS SONG) on the phone that runs the finale; it's saved in IndexedDB and plays fully offline.

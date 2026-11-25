@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — organizer panel (open the app with #organizer).
  * The PIN is a convenience so Brian doesn't wander in by accident. It is not security:
  * the site is public and everything (including the email words) is readable in the source. */
@@ -11,8 +22,8 @@
   function unlock() { try { g.sessionStorage.setItem(UNLOCK_KEY, '1'); } catch (e) { /* ignore */ } }
 
   var STEP_NAMES = {
-    intro: 'Opening', ch01: 'Ch01 debug (GLOVEBOX)', emailWed: 'Email: Bop It', ch02: 'Ch02 capitals', keys: 'Cards GLV-41 + CGO-82',
-    emailThu: 'Email: lowercase test', emailFri: 'Email: filter (say it back)', channel: 'Arms race (BOP/TWIST/PULL)',
+    intro: 'Opening', ch01: 'Ch01 debug (GLOVEBOX)', glovebox: 'Token GLV-41', ch02: 'Ch02 capitals', keys: 'Token CGO-82',
+    emailThu: 'Email: lowercase test', words: 'Words past the filter (terminal)', channel: 'Arms race (BOP/TWIST/PULL)',
     emailSat: 'Email: margins', beat: 'Build the drop', emailSun: 'Email: name the track', mix: 'Full Service (the mix)', stir: 'The glitch (SENTINEL stirs)', face: 'Tune my face', vault: 'Memory vault',
     emailMon: 'The backup (track 9)', protocol: 'Protocol readout'
   };

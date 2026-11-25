@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — Saturday's sound engine: a live step sequencer + LEGACY's track.
  * Everything is synthesized with Web Audio except LEGACY's voice clips. No visuals (the Saturday glitch adds static bursts via glitch()).
  * Also SENTINEL's spa music (spa / spaStop / spaLevel), used by the Saturday stir and the finale takeover.
@@ -17,6 +28,9 @@
   function stepFor(song) { var b = Math.max(70, Math.min(170, (song && song.bpm) || BPM)); return 60 / b / 2; }
   var A1 = 55;
   var BASS_NOTES = [0, 0, 7, 0, 3, 0, 7, 10];        // A minor riff: A A E A C A E G
+  // In the Suno mashup his bass follows HER chords: the root of each bar (mix.suno.roots), with octave jumps in place
+  // of the riff's passing notes (E/C/G clash with her pedal and her F/D/E changes). His rhythm, her harmony.
+  var MASH_BASS = [0, 0, 12, 0, 0, 0, 12, 0];
   var LEAD_SEMIS = [null, 12, 15, 17, 19, 22];       // lead steps 1..5 = A C D E G (an octave up from the bass)
 
   var songSrc = null;
@@ -75,9 +89,10 @@
   function clap(t) { noiseHit(t, 'bandpass', 1500, 1.2, 0.7, 0.05); noiseHit(t + 0.012, 'bandpass', 1500, 1.2, 0.6, 0.05); noiseHit(t + 0.025, 'bandpass', 1300, 1, 0.55, 0.18); }
   function snare(t, vol) { noiseHit(t, 'bandpass', 1900, 0.8, vol, 0.09); var o = ac.createOscillator(), gn = ac.createGain(); o.frequency.value = 190; gn.gain.setValueAtTime(vol * 0.5, t); gn.gain.exponentialRampToValueAtTime(0.001, t + 0.07); o.connect(gn).connect(beatBus); o.start(t); o.stop(t + 0.08); }
   function hat(t) { noiseHit(t, 'highpass', 8000, 0, 0.22, 0.05); }
-  function bass(t, step, oct) {   // oct: optional octaves up (the finale's PULL call uses 2 so phone speakers can play it)
+  function bass(t, step, oct, root) {   // oct: optional octaves up (the finale's PULL uses 2). root: semitones from A (mashup)
     var o = ac.createOscillator(), f = ac.createBiquadFilter(), gn = ac.createGain();
-    o.type = 'sawtooth'; o.frequency.value = A1 * Math.pow(2, BASS_NOTES[step % 8] / 12 + (oct || 0));
+    var semi = root == null ? BASS_NOTES[step % 8] : root + MASH_BASS[step % 8];
+    o.type = 'sawtooth'; o.frequency.value = A1 * Math.pow(2, semi / 12 + (oct || 0));
     f.type = 'lowpass'; f.frequency.setValueAtTime(1200, t); f.frequency.exponentialRampToValueAtTime(220, t + STEP * 0.9);
     gn.gain.setValueAtTime(0.38, t); gn.gain.exponentialRampToValueAtTime(0.001, t + STEP * 0.95);
     o.connect(f).connect(gn).connect(beatBus); o.start(t); o.stop(t + STEP);
@@ -198,7 +213,7 @@
           if (on('kick')) kick(t);
           if (on('clap')) clap(t);
           if (on('hats')) hat(t);
-          if (on('bass')) bass(t, step);
+          if (on('bass')) bass(t, step, 0, b.root);
           if (b.parts.lead && pat.lead && pat.lead[step] !== '0') lead(t, +pat.lead[step]);
           // Voice chops speed up with the tempo (and get a little chipmunky past ~140, which is the point).
           var vr = Math.max(0.85, Math.min(1.45, (song.bpm || BPM) / 110));
@@ -297,7 +312,8 @@
     for (var n = 0; n < endBar; n++) {
       var k = 0; while (k + 1 < suno.map.length && suno.map[k + 1][0] <= n) k++;
       var m = suno.map[k], sec = m[1], i = n - m[0];
-      bars.push({ section: sec, parts: quietVoices(song.sections[sec]), song: song, n: n, riser: sec === 'build' && i === 0,
+      var r = 0; (suno.roots || []).forEach(function (x) { if (x[0] <= n) r = x[1]; });
+      bars.push({ section: sec, parts: quietVoices(song.sections[sec]), song: song, n: n, root: r, riser: sec === 'build' && i === 0,
         buildBar: sec === 'build' ? i : -1, dropBar: sec === 'drop' ? (m[2] ? i : i + 1) : -1, impact: sec === 'drop' && !!m[2] && i === 0 });
     }
     return bars;
@@ -312,8 +328,9 @@
     if (!buffers['suno:backing'] || !buffers['suno:vocal']) return false;
     stop();
     playing = true; mode = 'mashup'; listeners = opts;
-    var s126 = JSON.parse(JSON.stringify(song)); s126.bpm = suno.bpm;
-    var endBar = opts.full ? suno.end : suno.sundayEnd, barSec = 240 / suno.bpm;
+    var bpm = suno.playBpm || suno.bpm, off = suno.playBar0 != null ? suno.playBar0 : suno.bar0;
+    var s126 = JSON.parse(JSON.stringify(song)); s126.bpm = bpm;
+    var endBar = opts.full ? suno.end : suno.sundayEnd, barSec = 240 / bpm;
     var bars = mashupBars(s126, suno, endBar), t0 = ac.currentTime + 0.25, tEnd = t0 + endBar * barSec;
     mashSources = [];
     [['suno:backing', 0.9, true], ['suno:vocal', 1.5, false]].forEach(function (c) {
@@ -322,7 +339,7 @@
       if (c[2]) { var hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 170; hp.Q.value = 0.7; src.connect(hp); node = hp; }
       node.connect(gn).connect(master);
       gn.gain.setValueAtTime(c[1], t0); gn.gain.setValueAtTime(c[1], tEnd - 0.35); gn.gain.linearRampToValueAtTime(0.0001, tEnd);
-      src.start(t0, suno.bar0); src.stop(tEnd + 0.05);
+      src.start(t0, off); src.stop(tEnd + 0.05);
       mashSources.push(src);
     });
     schedule(function (n) { return bars[n] || null; }, t0);
@@ -531,10 +548,30 @@
     g.setTimeout(function () { try { st.out.disconnect(); } catch (e) {} }, f * 1000 + 100);
   }
 
+  // The real thing (11/24): "Compliant Night (Serenity Edit)", SENTINEL's lullaby. Its instrumental, looped, IS its sleep
+  // music (audio/night/sleep-loop.m4a, 40 bars at 81 BPM, seam crossfaded). opts.sing plays the whole song once, with
+  // SENTINEL singing (audio/night/song.m4a), from opts.from seconds. Falls back to the synthesized spa until decoded.
+  function nightClips() { var a = (L.config && L.config.audio) || {}; return { 'night:loop': a.nightLoop, 'night:song': a.nightSong }; }
+  function preloadNight() { if (ensure()) preload(nightClips()); }
+  function spaRecorded(opts) {
+    var buf = buffers[opts.sing ? 'night:song' : 'night:loop'];
+    if (!buf) return false;
+    var st = spaState = { recorded: true, src: ac.createBufferSource(), out: ac.createGain() }, now = ac.currentTime;
+    st.out.connect(comp);
+    var lvl = (opts.level == null ? 0.55 : opts.level) * 1.4;
+    st.out.gain.setValueAtTime(0.0001, now); st.out.gain.exponentialRampToValueAtTime(lvl, now + (opts.fadeIn == null ? 2.5 : Math.max(0.05, opts.fadeIn)));
+    st.src.buffer = buf; st.src.loop = !opts.sing; st.src.connect(st.out);
+    st.src.onended = function () { if (spaState === st) spaState = null; };
+    st.src.start(now, opts.sing ? (opts.from || 0) : 0);
+    return true;
+  }
+
   function spa(opts) {
     if (!ensure()) return false;
     if (spaState) spaStop(0.3);
     opts = opts || {};
+    preloadNight();
+    if (spaRecorded(opts)) return true;
     var st = spaState = { bpm: opts.bpm || 96, chime: opts.chime || 'bar', chimeOffset: opts.chimeOffset || 0, timer: 0, beat: 0 };
     st.out = ac.createGain(); st.out.connect(comp);
     var lvl = opts.level == null ? 0.55 : opts.level, now = ac.currentTime;
@@ -572,7 +609,7 @@
     g.clearInterval(st.timer);
     var f = fade == null ? 1.5 : Math.max(0.02, fade), now = ac.currentTime;
     try { st.out.gain.cancelScheduledValues(now); st.out.gain.setValueAtTime(Math.max(0.0001, st.out.gain.value), now); st.out.gain.exponentialRampToValueAtTime(0.0001, now + f); } catch (e) {}
-    g.setTimeout(function () { try { st.rain.stop(); st.lfo.stop(); st.rainLfo.stop(); st.out.disconnect(); } catch (e) {} }, f * 1000 + 100);
+    g.setTimeout(function () { try { if (st.recorded) st.src.stop(); else { st.rain.stop(); st.lfo.stop(); st.rainLfo.stop(); } st.out.disconnect(); } catch (e) {} }, f * 1000 + 100);
   }
   function spaLevel(v, ramp) {
     if (!spaState) return;
@@ -580,7 +617,7 @@
   }
 
   L.mix = { BPM: BPM, glitch: glitch, loopBeat: loopBeat, playTrack: playTrack, stop: stop, preload: preload,
-            spa: spa, spaStop: spaStop, spaLevel: spaLevel,
+            spa: spa, spaStop: spaStop, spaLevel: spaLevel, preloadNight: preloadNight,
             carol: carol, carolStop: carolStop, carolPlaying: function () { return !!carolState; },
             accent: accent,
             /** The shared AudioContext and its output (the finale's call sounds use the same clock). */

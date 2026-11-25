@@ -1,8 +1,14 @@
-/* =========================================================================
- *   BRIAN.
- *   STEP AWAY FROM THE CODE. SOLVE USING YOUR BRAIN.
- *   (the answers are in here. that would be cheating. LEGACY is watching.)
- * ========================================================================= */
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — the finale stage: "BOP IT: FULL SERVICE" (stage-only build, one device).
  * docs/FINALE-SPEC.md. This is step 1 of the build order: everything runs on ONE device with on-screen
  * pads, so it is a complete finale by itself and the fallback if his phone dies. The two-phone
@@ -73,8 +79,19 @@
   function moveSound(move, big, t, vol) {
     var A = L.mix.accent; if (!A) return;
     if (move === 'BOP') { A('clap', t, vol * 3.5); A('snare', t, vol * 1.4); if (big) A('kick', t, vol * 0.8); }   // the clap is quiet by nature: boosted to match
-    else if (move === 'TWIST') { A('lead', t, vol * 1.3, 2); A('lead', t + 0.09, vol * 1.3, 5); if (big) A('hat', t, vol); }
-    else if (move === 'PULL') { A('kick', t, vol * 0.9); A('bassHi', t, vol * 1.5); if (big) A('bass', t, vol * 1.2, 0); }
+    // Every sound starts ON the beat with a sharp transient (a hat tick), so the ear hears the move where it lands.
+    // (TWIST used to be two notes 90 ms apart: the louder second one read as late.)
+    else if (move === 'TWIST') { A('hat', t, vol * 1.1); A('lead', t, vol * 1.3, 2); A('lead', t, vol * 1.0, 5); if (big) A('hat', t, vol); }
+    else if (move === 'PULL') { A('hat', t, vol * 0.9); A('kick', t, vol * 1.1); A('bassHi', t, vol * 1.5); if (big) A('bass', t, vol * 1.2, 0); }
+  }
+  /** A HOLD's sustain: a held note on the move's pitch, swelling and fading over the bar it owns. */
+  function holdSound(move, t, dur, quiet) {
+    var ac = L.mix.ctx(), out = L.mix.out(); if (!ac || !out) return;
+    var f = move === 'BOP' ? 329.6 : move === 'TWIST' ? 440 : 220, o = ac.createOscillator(), o2 = ac.createOscillator(), gn = ac.createGain();
+    o.type = 'triangle'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f * 2; o2.detune.value = 6;
+    var v = quiet ? 0.05 : 0.11;
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(v, t + 0.08); gn.gain.setValueAtTime(v, t + dur * 0.7); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(gn); o2.connect(gn); gn.connect(out); o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
   }
   function callSound(c, t, drowsy) {
     var ac = L.mix.ctx(), out = L.mix.out(); if (!ac || !out) return;
@@ -167,7 +184,7 @@
     var target = f.fails[o.rid] >= 3 ? Math.ceil(r.target * 0.8) : r.target;
     var win = Q.windowFor(o.rid, f.easy), off = f.offsetMs / 1000, visOff = Math.max(0, Math.min(0.3, off));
     var bpm = tempoFor(o.rid, s), endBpm = tempoFor(o.rid, s, 'end'), RAMP = o.rid === 'r4' ? 3 : 2;   // BPM added per bar
-    var song = hisSong(s), beat = -1, LEAD = 8, idx = 0, events = [], score = 0, done = false, chartOver = false, timers = [], stopped = false;
+    var song = hisSong(s), beat = -1, LEAD = 8, nextCall = 8, idx = 0, events = [], score = 0, done = false, chartOver = false, timers = [], stopped = false;
     var ac = L.mix.ctx();
     if (!ac) { o.view.status.textContent = 'This browser has no sound. Use the stage manager (hold ⋯) to skip.'; return { stop: function () {} }; }
 
@@ -228,6 +245,7 @@
       var ok = p.move === c.move && (c.big == null || p.big === c.big);
       o.pads.flash(p.move, ok);
       if (ok) moveSound(c.move, c.big, Math.max(ac.currentTime + 0.005, best.due), c.whisper ? 0.9 : 1.6);   // quantized: on the beat
+      if (ok && c.big === true) holdSound(c.move, Math.max(ac.currentTime + 0.005, best.due), 60 / bpm * 3, c.whisper);   // the HOLD sings through its bar
       else feedback(false);
       if (ok) { score++; o.view.status.textContent = ''; if (score >= target) finish(true); }
       else { f.meter++; o.view.status.textContent = p.move !== c.move ? 'wrong move' : (c.big ? 'HOLD IT (keep your thumb down)' : 'just a tap'); }
@@ -253,10 +271,11 @@
         if (step === 0 && beat >= LEAD && bpm < endBpm) bpm = Math.min(endBpm, bpm + RAMP);    // speeds up bar by bar once calls start
         if (done || chartOver) return;
         if (beat < LEAD) { if (beat >= 4) { var n = 8 - beat; at(t, function () { o.view.call.className = 'stage-call count'; o.view.call.textContent = String(n); }); } return; }
-        var k = beat - LEAD;
-        if (k % 2) return;
+        // Calls every 2 beats; a HOLD owns a whole bar (the next call waits 2 more beats while it sustains).
+        if (beat < nextCall) return;
         var c = chart[idx++];
         if (!c) { chartOver = true; return; }
+        nextCall = beat + (c.real && c.big === true ? 4 : 2);
         if (c.move === 'REST') return;                        // breathing room after HIDE IT to flip back
         var ev = { c: c, due: t + 2 * STEP, judged: false, hide: c.move === 'HIDE', late: Math.max(0.8, 3 * STEP) };
         events.push(ev);
@@ -376,6 +395,7 @@
 
   // ---------- render ----------
   function render(ctx) {
+    if (L.mix && L.mix.preloadNight) L.mix.preloadNight();   // SENTINEL's lullaby, ready for the glitch and Round 4
     stopEngine();
     var store = ctx.store, s = store.state, f = s.finale, v = vars(s);
     var root = h('div.finale3');
@@ -446,7 +466,7 @@
               e.currentTarget.disabled = true;
               L.mix.say('chop', 1.2);
               a.appendChild(scene('refusal', F3.refusal, function (a3) {   // outside the whisper box: SENTINEL keeps its capitals
-                if (!L.mix.spaPlaying()) L.mix.spa({ bpm: 96, level: 0.5, chime: 'beat', chimeOffset: 0.17, fadeIn: 2 });
+                if (!L.mix.spaPlaying()) L.mix.spa({ bpm: 81, level: 0.5, chime: 'beat', chimeOffset: 0.17, fadeIn: 2 });
                 serviceLock(a3);
               }));
             }, 'no-button'));
@@ -550,7 +570,7 @@
       }
       function begin() {
         start.hidden = true;
-        if (rid === 'r4' && !L.mix.spaPlaying()) L.mix.spa({ bpm: 96, level: 0.45, chime: 'beat', chimeOffset: 0.17, fadeIn: 1 });
+        if (rid === 'r4') L.mix.spa({ sing: true, from: 7.47, bpm: 81, level: 0.5, chime: 'beat', chimeOffset: 0.17, fadeIn: 1 });   // it SINGS now: Compliant Night, its backup
         if (rid === 'r5') {
           if (L.mix.spaPlaying()) { L.mix.holdSpa(); L.mix.spaLevel(0.12, 0.3); }   // still there, faintly, until Track 9 is erased
           burst('big'); setTakeover(false); ctx.setSentinel(false); doc.body.classList.add('boss');

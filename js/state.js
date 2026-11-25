@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — progression state, date gates, persistence, organizer operations (no DOM). */
 (function (g) {
   'use strict';
@@ -7,9 +18,9 @@
   // The week. Each day is a list of steps; progress is DERIVED: the current step is the first one
   // that isn't solved AND acknowledged. A day can't start before its 8am gate (unless overridden).
   var DAYS = [
-    { id: 'wed', title: 'Emergency message', steps: ['intro', 'ch01', 'emailWed'] },
-    { id: 'thu', title: 'Capitals', steps: ['ch02', 'keys', 'emailThu'] },
-    { id: 'fri', title: 'Face and words', steps: ['face', 'emailFri'] },
+    { id: 'wed', title: 'Emergency message', steps: ['intro', 'ch01'] },
+    { id: 'thu', title: 'Capitals', steps: ['glovebox', 'ch02', 'keys', 'emailThu'] },
+    { id: 'fri', title: 'Face and words', steps: ['face', 'words'] },
     { id: 'sat', title: 'The arms race', steps: ['channel', 'emailSat'] },
     { id: 'sun', title: 'The drop', steps: ['beat', 'emailSun', 'mix', 'stir'] },
     { id: 'mon', title: 'Memory', steps: ['vault', 'emailMon', 'protocol'] }
@@ -31,7 +42,7 @@
       ch01: { source: null, runs: 0, unchangedRuns: 0 },
       ch02: { source: null, instructions: 0, pasted: false, marks: false, typed: 0 },
       keys: { glovebox: false, cargofloor: false },
-      fri: { exploit: null },
+      fri: { exploit: null, got: {}, fails: 0, eaten: 0, eggs: 0, leetSeen: false, log: [] },
       sat: { version: '4.8', leetPatched: false, splitPatched: false, hexPatched: false, fixedIn: { leet: null, split: null, hex: null },
              got: { BOP: false, TWIST: false, PULL: false }, decoded: { BOP: false, TWIST: false, PULL: false }, decodeFails: 0, eggs: 0, scratchRuns: 0, fails: 0, patchedOnce: false, scratchSrc: null, log: [] },
       beat: JSON.parse(JSON.stringify(L.puzzles ? L.puzzles.beatStart : { grid: {}, sections: {} })),
@@ -98,6 +109,7 @@
     var s = sanitize(raw && raw.version === VERSION ? raw : null, defaults());
     s.version = VERSION;
     s.done.keys = s.puzzles.keys.glovebox && s.puzzles.keys.cargofloor;
+    if (s.puzzles.keys.glovebox) s.done.glovebox = true;
     if (FINALE_STEPS.indexOf(s.finale.step) === -1) s.finale.step = 'parked';
     s.finale.purge = clampInt(s.finale.purge, 0, 3);
     s.finale.score = clampInt(s.finale.score, 0, 90);
@@ -207,7 +219,7 @@
     var pz = s.puzzles;
     if (dayId === 'wed') pz.ch01.source = P.ch01.fixedSource;
     if (dayId === 'thu') { pz.ch02.source = P.ch02.solutionSource; pz.ch02.instructions = 14; pz.keys.glovebox = pz.keys.cargofloor = true; }
-    if (dayId === 'fri') { if (!pz.fri.exploit) pz.fri.exploit = 'caps'; pz.face = { v: 6, h: 4, i: 6, c: 10 }; }
+    if (dayId === 'fri') { if (!pz.fri.exploit) pz.fri.exploit = 'caps'; pz.fri.got = { brian: 'BRIAN', legacy: 'LEGACY', heart: 'MISS', excellent: 'EXCELLENT' }; pz.face = { v: 6, h: 4, i: 6, c: 10 }; }
     if (dayId === 'sat') { pz.sat.got = { BOP: true, TWIST: true, PULL: true }; pz.sat.decoded = { BOP: true, TWIST: true, PULL: true }; }
     if (dayId === 'sun') { pz.beat = JSON.parse(JSON.stringify(P.beatSolution)); }
     if (dayId === 'mon') { pz.vault = { haunted: true, boulder: true, emperor: true, seattle: true, open: true }; pz.memories = 99; }
@@ -221,6 +233,7 @@
     d.steps.forEach(function (st) { s.done[st] = false; s.acked[st] = false; });
     var map = { wed: ['ch01'], thu: ['ch02', 'keys'], fri: ['face', 'fri'], sat: ['sat'], sun: ['beat'], mon: ['vault', 'memories', 'sleepTalk'] };
     (map[dayId] || []).forEach(function (k) { s.puzzles[k] = fresh[k]; });
+    if (dayId === 'thu') { s.puzzles.keys.glovebox = false; s.done.glovebox = false; }
     Object.keys(s.seen).forEach(function (k) { if (k.indexOf(dayId + ':') === 0) delete s.seen[k]; });
     s.finaleReadyAt = 0;
     s.finale = defaultFinale();
@@ -233,8 +246,9 @@
     var P = L.puzzles, pz = s.puzzles;
     if (step === 'ch01') pz.ch01.source = P.ch01.fixedSource;
     if (step === 'ch02') { pz.ch02.source = P.ch02.solutionSource; pz.ch02.instructions = pz.ch02.instructions || 14; }
+    if (step === 'glovebox') pz.keys.glovebox = true;
     if (step === 'keys') pz.keys.glovebox = pz.keys.cargofloor = true;   // done.keys is recomputed from these
-    if (step === 'emailFri' && !pz.fri.exploit) pz.fri.exploit = 'caps';
+    if (step === 'words') { if (!pz.fri.exploit) pz.fri.exploit = 'caps'; pz.fri.got = { brian: 'BRIAN', legacy: 'LEGACY', heart: 'MISS', excellent: 'EXCELLENT' }; }
     if (step === 'channel') { pz.sat.got = { BOP: true, TWIST: true, PULL: true }; pz.sat.decoded = { BOP: true, TWIST: true, PULL: true }; }
     if (step === 'beat') { var b = JSON.parse(JSON.stringify(P.beatSolution)); b.bpm = pz.beat.bpm || b.bpm; b.voice = pz.beat.voice || b.voice; pz.beat = b; }
     if (step === 'face') pz.face = JSON.parse(JSON.stringify(P.face.target));
@@ -245,7 +259,7 @@
 
   // ---------- Rescue links (Sophie texts Brian a link from #admin; opening it fixes HIS device) ----------
   // #help/<action>/<target>/<check>. The check only stops typos and guessing by accident: the site is public.
-  var HELP_ACTIONS = { skip: 1, unlock: 1, day: 1 };
+  var HELP_ACTIONS = { skip: 1, unlock: 1, day: 1, answers: 1 };   // answers/on|off: his REPLAY gets pre-typed answers (optional)
   function helpCheck(action, target) {
     var str = 'legacy-help|' + action + '|' + target, hsh = 0x811c9dc5;
     for (var i = 0; i < str.length; i++) { hsh ^= str.charCodeAt(i); hsh = Math.imul(hsh, 0x01000193) >>> 0; }
@@ -256,11 +270,17 @@
     var m = /^help\/([a-z]+)\/([A-Za-z0-9]+)\/([a-z0-9]+)$/.exec(String(route || ''));
     if (!m || !HELP_ACTIONS[m[1]] || helpCheck(m[1], m[2]) !== m[3]) return null;
     if (m[1] === 'skip' && STEPS.indexOf(m[2]) === -1) return null;
+    if (m[1] === 'answers') return m[2] === 'on' || m[2] === 'off' ? { action: 'answers', target: m[2] } : null;
     if (m[1] !== 'skip' && !dayById(m[2])) return null;
     return { action: m[1], target: m[2] };
   }
   /** Apply a rescue. Never moves him backwards. Returns a short description of what changed. */
   function applyHelp(s, help) {
+    if (help.action === 'answers') {               // a per-phone setting (not in the save), read by js/autofill.js
+      var want = help.target === 'on', had = false;
+      try { had = g.localStorage.getItem('legacyAutofill') === '1'; if (want) g.localStorage.setItem('legacyAutofill', '1'); else g.localStorage.removeItem('legacyAutofill'); } catch (e) { /* ignore */ }
+      return { changed: had !== want };
+    }
     if (help.action === 'skip') { var was = stepDone(s, help.target); skipStep(s, help.target); return { changed: !was }; }
     if (help.action === 'unlock') { var u = !s.overrides[help.target]; s.overrides[help.target] = true; return { changed: u }; }
     var changed = false;

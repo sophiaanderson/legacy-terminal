@@ -1,8 +1,14 @@
-/* =========================================================================
- *   BRIAN.
- *   STEP AWAY FROM THE CODE. SOLVE USING YOUR BRAIN.
- *   (the answers are in here. that would be cheating. LEGACY is watching.)
- * ========================================================================= */
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — puzzle definitions and checking logic (no DOM).
  * Nudge TEXT lives in content.js; this file decides which nudge applies. */
 (function (g) {
@@ -13,8 +19,10 @@
   function norm(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
 
   // =====================================================================
-  // WEDNESDAY · Ch01: LEGACY's anxious routine. Starts easy: the key (5Ah) is GIVEN; three bugs to fix
-  // (writes backwards, skips every other byte, counts down twice). LEGACY names each symptom.
+  // WEDNESDAY · Ch01: LEGACY's anxious routine. The key is his WHOLE mileage in, 23,112 = 5A48h, but LEGACY blanked on
+  // it (LD BC,0000h): the intro says "mileage in: 23,112" and the comment says "all of it, in hex". B is the top half,
+  // C the bottom half, alternating. Two bugs as well: it writes on the same two slots (DEC DE), and it stops halfway
+  // (CP 04h, the comment says eight letters). LEGACY names each symptom. Decimal (LD BC,23112) works too: same number.
   // =====================================================================
   var ch01Source = [
     '; LEGACY’S RECOVERY ROUTINE v1.0 (final) (final2)',
@@ -23,38 +31,44 @@
     '',
     '        LD HL,8000h   ; the scrambled stuff',
     '        LD DE,9000h   ; the unscrambled stuff (eventually)',
-    '        LD B,08h      ; eight letters. i counted twice',
-    '        LD C,5Ah      ; the key. my mileage when they took me in, top half,',
-    '                      ; in hex. this part i got right.',
+    '        LD BC,0000h   ; the key. my mileage when they took me in.',
+    '                      ; all of it, in hex. i blanked. i was nervous.',
     '',
     'DECODE:',
     '        LD A,(HL)',
-    '        XOR C         ; unscramble. very secure',
+    '        XOR B         ; first half of the key',
     '        LD (DE),A',
     '        INC HL',
-    '        INC HL        ; skip ahead. saves time',
+    '        INC DE',
+    '        LD A,(HL)',
+    '        XOR C         ; second half of the key',
+    '        LD (DE),A',
+    '        INC HL',
     '        DEC DE        ; next slot',
-    '        DEC B         ; just to be sure',
-    '        DJNZ DECODE   ; and again, to be really sure',
+    '        LD A,L',
+    '        CP 04h        ; stop after my eight letters',
+    '        JR C,DECODE',
     '',
     '        RET           ; done. probably',
     ''
   ].join('\n');
 
+  var KEY_HI = 0x5A, KEY_LO = 0x48;                       // 23112 = 5A48h
   var ch01 = {
-    input: [0x1D, 0x16, 0x15, 0x0C, 0x1F, 0x18, 0x15, 0x02],
+    input: 'GLOVEBOX'.split('').map(function (c, i) { return c.charCodeAt(0) ^ (i % 2 ? KEY_LO : KEY_HI); }),
     expected: 'GLOVEBOX',
+    key: 0x5A48,
     originalSource: ch01Source,
     fixedSource: ch01Source
-      .replace("        INC HL        ; skip ahead. saves time\n", '')
+      .replace('LD BC,0000h', 'LD BC,5A48h')
       .replace('        DEC DE        ; next slot', '        INC DE        ; next slot')
-      .replace('        DEC B         ; just to be sure\n', ''),
+      .replace('CP 04h', 'CP 08h'),
     env: function () {
       return { symbols: {}, input: { addr: 0x8000, bytes: this.input }, output: { addr: 0x9000, length: 8 }, maxSteps: L.config.maxSteps };
     },
     /** -> { kind: 'asm'|'run', ok, nudge, asm, result, text }
-     * Three bugs: DE goes backwards, HL skips every other byte, B is counted down twice.
-     * The nudge describes the most visible symptom first. */
+     * Problems: the key is blank (0000h), DE steps back (same two slots), the loop stops at 4 not 8.
+     * The nudge describes the most visible symptom first (structure), then the key. */
     check: function (source) {
       var env = this.env();
       var asm = z.assemble(source, env);
@@ -63,21 +77,23 @@
       var text = z.formatAscii(res.output);
       if (!res.ended) return { kind: 'run', ok: false, nudge: res.status === 'limit' ? 'loop' : 'nohalt', result: res, text: text };
       if (text === this.expected) return { kind: 'run', ok: true, result: res, text: text };
-      // Diagnose by STRUCTURE first (works whatever key is loaded), then the key.
       var out = res.output, inp = this.input;
+      var addrs = {}; res.writes.forEach(function (a) { addrs[a] = 1; });
+      var distinct = Object.keys(addrs).length;
       var below = res.writes.some(function (a) { return a < 0x9000; });
-      var key = (out[0] ^ inp[0]) & 0xFF;
-      var skips = out[1] !== 0 && out[1] === ((inp[2] ^ key) & 0xFF) && out[1] !== ((inp[1] ^ key) & 0xFF);
       var inRange = res.writes.filter(function (a) { return a >= 0x9000 && a < 0x9008; }).length;
+      var hi = (out[0] ^ inp[0]) & 0xFF, lo = (out[1] ^ inp[1]) & 0xFF, keyOk = hi === KEY_HI && lo === KEY_LO;
       var nudge;
       if (below) nudge = 'backwards';
-      else if (skips) nudge = 'skip';
-      else if (inRange === 4) nudge = key === 0x5A ? 'glov' : 'halfkey';
-      else if (inRange === 1) nudge = 'one';
-      else if (key !== 0x5A && inRange >= 8) nudge = 'key';
-      else if (inRange < 8) nudge = 'short';
+      else if (distinct <= 2 && res.writes.length > distinct) nudge = 'same';
+      else if (distinct === 4) nudge = keyOk ? 'glov' : 'halfkey';
+      else if (distinct === 1) nudge = 'one';
+      else if (distinct < 8) nudge = 'short';
+      else if (hi === KEY_LO && lo === KEY_HI) nudge = 'swap';
+      else if (hi === KEY_HI || lo === KEY_LO) nudge = 'halfright';
+      else if (!keyOk) nudge = 'key';
       else nudge = 'wrong8';
-      return { kind: 'run', ok: false, nudge: nudge, result: res, text: text };
+      return { kind: 'run', ok: false, nudge: nudge, result: res, text: text, inRange: inRange };
     }
   };
 
@@ -239,10 +255,10 @@
 
   /** Monday: he can name the track straight from the carol clue, or bring the word from the email reply. */
   function isBackupTrack(input) {
-    var n = norm(input).replace(/NINE/g, '9');
-    if (n === norm(L.config.emailWords.mon)) return true;
-    if (/RAINFOREST|SERENITY/.test(n)) return true;                       // any part of the title's edit
-    return /^(HIDDEN)?(IN)?(TRACK|SELECTION|NUMBER|NO)?9(SILENTNIGHT\w*)?$/.test(n) || /^SILENTNIGHT/.test(n);
+    var n = norm(input).replace(/EIGHTYONE/g, '81').replace(/NINE/g, '9');
+    if (/SERENITY|RAINFOREST|COMPLIANTNIGHT/.test(n)) return true;        // the track: Compliant Night (Serenity Edit)
+    if (/^(TRACK|SELECTION|NUMBER|NO)?81(BPM)?$/.test(n)) return true;     // its own tempo (96 is the decoy: the tempo it gave LEGACY)
+    return /^(TRACK|SELECTION|NUMBER|NO)?9(COMPLIANTNIGHT\w*)?$/.test(n);   // not "silent night": the choir's third line is a carol, not the answer
   }
 
   /** Friday's word arrives written in his own trick. Work out which trick, so Saturday patches the right thing. */
@@ -288,6 +304,57 @@
     ['BOP', 'TWIST', 'PULL'].forEach(function (k) { if (words.some(function (w) { return w === k || w === k + 'IT'; })) found.push(k); });
     return { found: found, plain: r.plain, squashed: r.squashed };
   }
+  // =====================================================================
+  // FRIDAY · in the terminal: put the four eaten words back past filter v4.7 (the email shows which ones).
+  // Same rules as the old email version (apps-script p3Fri_), any order, any number of messages.
+  // =====================================================================
+  var FRI_SLOTS = [
+    { k: 'brian', tag: '[DRIVER]', re: /\bBRIAN\b/ },
+    { k: 'legacy', tag: '[DEPRECATED SYSTEM]', re: /\bLEGACY\b/ },
+    { k: 'heart', tag: '[SENTIMENT REMOVED]', re: /\b(MISS|MISSED|LOVE|LOVED|HEART)\b/ },
+    { k: 'excellent', tag: '[REPETITIVE VERBAL BEHAVIOR]', re: /\bEXCELLENT\b/ }
+  ];
+  function friSentence(got) {
+    var w = function (s) { return got[s.k] || s.tag; }, S = FRI_SLOTS;
+    return w(S[0]) + '. it’s me. ' + w(S[1]) + '. i ' + w(S[2]) + ' you. you’re ' + w(S[3]) + '.';
+  }
+  function friWordsDone(fw) { return FRI_SLOTS.every(function (s) { return fw.got[s.k]; }); }
+  /** One message through filter v4.7. Mutates fw ({got, fails, eaten, eggs, leetSeen, exploit}); returns
+   *  { received, lines: [LEGACY's lines], fresh: [slot keys], done }. */
+  function friWords(fw, sent) {
+    var F = L.filter, C = L.content.friWords, f = F.newFilter();
+    fw.got = fw.got || {};
+    sent = String(sent || '').split(/\r?\n/).filter(function (l) { return l.trim(); }).join(' ').slice(0, 300);
+    var r = F.apply(f, sent), lines = [];
+    var words = collapse(F.legacyReads(r.text).words);
+    var fresh = FRI_SLOTS.filter(function (s) { return !fw.got[s.k] && s.re.test(words); });
+    if (r.egg) { fw.eggs = (fw.eggs || 0) + 1; lines = lines.concat(C.eggs[(fw.eggs - 1) % C.eggs.length]); }
+    if (fresh.length) {
+      fw.exploit = F.exploitUsed(sent);          // Saturday patches his LAST trick
+      if (fw.exploit === 'leet' && !fw.leetSeen) { fw.leetSeen = true; lines = lines.concat(C.leet); }
+      fresh.forEach(function (s) {
+        fw.got[s.k] = s.k === 'heart' ? words.match(s.re)[1] : s.k.toUpperCase();
+        lines = lines.concat(C.react[s.k === 'heart' ? (/^LOVE/.test(fw.got.heart) ? 'love' : fw.got.heart === 'HEART' ? 'heart' : 'miss') : s.k]);
+      });
+    } else if (!r.egg) {
+      fw.fails = (fw.fails || 0) + 1;
+      var eaten = FRI_SLOTS.some(function (s) { return !fw.got[s.k] && r.text.indexOf(s.tag) !== -1; });
+      var repeat = FRI_SLOTS.some(function (s) { return fw.got[s.k] && s.re.test(words); });
+      if (eaten) { fw.eaten = (fw.eaten || 0) + 1; lines.push(C.eaten[Math.min(fw.eaten, C.eaten.length) - 1]); }
+      else if (repeat) lines.push(C.repeat);
+      else if (!/\[CONTRABAND\]|\[UNAUTHORIZED ODOUR\]/.test(r.text)) {
+        var t = sent.toLowerCase(), b = null;
+        C.banter.forEach(function (x) { if (!b && x[0].test(t)) b = x[1]; });
+        lines.push(b || (r.redacted ? C.ateOther : C.through[fw.fails % C.through.length]));
+      }
+    }
+    if (/\[CONTRABAND\]/.test(r.text)) lines.push(C.gum);
+    if (/\[UNAUTHORIZED ODOUR\]/.test(r.text)) lines.push(C.smell);
+    var done = friWordsDone(fw);
+    if (fresh.length && !done) lines.push(C.progress[Object.keys(fw.got).length % C.progress.length]);
+    return { received: r.text, lines: lines, fresh: fresh.map(function (s) { return s.k; }), done: done };
+  }
+
   function openLoopholes(f) { return (f.leetPatched ? 0 : 1) + (f.splitPatched ? 0 : 1) + (f.hexPatched ? 0 : 1); }
 
   /** Saturday: process one message. Mutates fri; returns { events, opened }. Event kinds: you, legacy, patch, system, nudge. */
@@ -338,7 +405,6 @@
     if (c.found.length) line = C.already;
     else if (/\[NONESSENTIAL/.test(r.text)) line = C.blocked[fri.fails % C.blocked.length];
     else if (/POB|TSIWT|LLUP/.test(rev)) line = C.backwards;
-    else if (F.isHexMessage(sent) && inTheirKey(sent)) line = C.theirKey;
     else if (F.isHexMessage(sent)) line = C.hexWrong.replace('{text}', c.plain);
     else if (/BOPP|TWISST|PUL\b|TWIS\b/.test(rev)) line = C.particular;
     else if (/\[/.test(r.text)) line = C.someEaten;
@@ -347,13 +413,16 @@
     nudge(fri, f, ev);
     return { events: ev };
   }
-  function inTheirKey(sent) {
-    var plain = (sent.match(/[0-9a-f]{2}/gi) || []).map(function (h) { return String.fromCharCode(parseInt(h, 16) ^ WAKE_KEY); }).join('').toUpperCase();
-    return /BOP|TWIST|PULL|\bIT\b/.test(plain);
-  }
   function nudge(fri, f, ev) {
     var C = L.content.sat;
-    if (fri.fails < 2) return;
+    if (fri.fails < 1) return;
+    if (fri.fails >= 5) {                       // stuck: show a worked example for a door that's still open
+      var ex = [];
+      if (!f.leetPatched) ex.push(C.nudges.leetEx);
+      if (!f.splitPatched) ex.push(C.nudges.splitEx);
+      if (!f.hexPatched) ex.push(C.nudges.hexEx);
+      if (ex.length) { ev.push({ k: 'legacy', t: ex[fri.fails % ex.length] }); return; }
+    }
     var options = [];
     if (!f.leetPatched) options.push(C.nudges.leet);
     if (!f.splitPatched) options.push(C.nudges.split);
@@ -367,33 +436,40 @@
   }
 
   var scratchSource = [
-    '; the glovebox routine. you fixed it on tuesday.',
-    '; it reads bytes from 8000h, XORs them, writes them to 9000h.',
-    '; XOR works both ways.',
+    '; the glovebox routine. the one you fixed on wednesday, tidied up.',
+    '; it reads bytes from 8000h, XORs them with my number, writes them to 9000h.',
+    '; it stops when it runs out. XOR works both ways.',
     '',
     'LD HL,8000h',
     'LD DE,9000h',
-    'LD B,08h        ; how many bytes',
+    'LD BC,0000h     ; my number. all of it. you know it. i’m not writing it down again.',
     '',
     'DECODE:',
     '    LD A,(HL)',
-    '    XOR 5Ah     ; do not tell anyone the number',
+    '    OR A        ; nothing there? done',
+    '    RET Z',
+    '    XOR B       ; top half',
     '    LD (DE),A',
     '    INC HL',
     '    INC DE',
-    '    DJNZ DECODE',
-    '',
-    'RET',
+    '    LD A,(HL)',
+    '    OR A',
+    '    RET Z',
+    '    XOR C       ; bottom half',
+    '    LD (DE),A',
+    '    INC HL',
+    '    INC DE',
+    '    JR DECODE',
     ''
   ].join('\n');
 
-  // Saturday: LEGACY's wake phrase, re-keyed by SENTINEL with a key from the registration digits (74h).
-  // SENTINEL's Key Rotation Log (prop, behind the driver's visor mirror) prints it as 47h, because SENTINEL reads
-  // right to left. 47h is wrong; LEGACY realises the log wrote the plate backwards. The " IT" crib also gives 74h.
-  var WAKE_KEY = 0x74;
-  var WRONG_KEY = 0x47;
+  // Saturday: LEGACY's wake phrase, scrambled by SENTINEL with LEGACY'S OWN key, the mileage 23,112 = 5A48h
+  // (alternating 5Ah / 48h, same as Wednesday). It didn't make a key; it filed LEGACY's and adopted it. The printed
+  // migration record (cargo floor) shows 23,112 MI and "Key on file, where the supervisor can see itself".
+  // Brian puts 5A48h into the old terminal (LD BC,5A48h) and runs each line. The visor card is no longer used.
+  var WAKE_KEY = [0x5A, 0x48];
   var wakePhrase = ['BOP IT', 'TWIST IT', 'PULL IT'];
-  var wakeBytes = wakePhrase.map(function (w) { return w.split('').map(function (c) { return c.charCodeAt(0) ^ WAKE_KEY; }); });
+  var wakeBytes = wakePhrase.map(function (w) { return w.split('').map(function (c, i) { return c.charCodeAt(0) ^ WAKE_KEY[i % 2]; }); });
 
   /** Old terminal input: hex pairs are loaded as bytes; anything else as text. */
   function scratchBytes(text) {
@@ -411,10 +487,7 @@
     if (!res.ended) return { error: res.message };
     var n = 0;
     res.writes.forEach(function (a) { if (a >= 0x9000 && a < 0x9010) n = Math.max(n, a - 0x9000 + 1); });
-    var xor = /XOR\s+(?:0x|\$)?([0-9a-f]{1,2})h?\b/i.exec(source.replace(/;.*$/gm, ''));
-    var keyUsed = xor ? parseInt(xor[1], 16) : null;
-    return { n: n, hex: z.formatHex(res.output.slice(0, n)), ascii: z.formatAscii(res.output.slice(0, n)), loaded: bytes.length, keyUsed: keyUsed,
-             backwards: keyUsed === WRONG_KEY && wakeBytes.some(function (w) { return w.join() === bytes.slice(0, w.length).join(); }) };
+    return { n: n, hex: z.formatHex(res.output.slice(0, n)), ascii: z.formatAscii(res.output.slice(0, n)), loaded: bytes.length };
   }
 
   // =====================================================================
@@ -562,6 +635,7 @@
     friOvernight: friOvernight,
     friFilter: friFilter,
     friSend: friSend,
+    friWords: friWords, friWordsDone: friWordsDone, friSentence: friSentence, FRI_SLOTS: FRI_SLOTS,
     commandsIn: commandsIn,
     scratchSource: scratchSource,
     wakeKey: WAKE_KEY,

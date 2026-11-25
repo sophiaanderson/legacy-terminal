@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — admin mode (open the app with #admin). Sophie's remote toolkit while she's away from Brian's phone:
  *   1. Answer sheet + what to text him (gentle nudge, then a stronger one)
  *   2. Rescue links: she texts him a link; opening it on HIS phone skips a step / opens a day / restores lost progress
@@ -33,8 +44,8 @@
   }
 
   var STEP_NAMES = {
-    intro: 'Opening', ch01: 'Fix LEGACY’s routine (→ GLOVEBOX)', emailWed: 'Email: what did you find (Bop It)', ch02: 'Capitals routine', keys: 'Cards GLV-41 + CGO-82',
-    emailThu: 'Email: reply in lowercase', emailFri: 'Email: say it back (filter)', channel: 'Wake phrase + get BOP/TWIST/PULL through',
+    intro: 'Opening', ch01: 'Fix LEGACY’s routine (→ GLOVEBOX)', glovebox: 'Glovebox token GLV-41', ch02: 'Capitals routine', keys: 'Cargo floor token CGO-82',
+    emailThu: 'Email: reply in lowercase', words: 'Words past the filter (terminal)', channel: 'Wake phrase + get BOP/TWIST/PULL through',
     emailSat: 'Email: the margins', beat: 'Build the drop', emailSun: 'Email: name the track', mix: 'Play the mix', stir: 'The glitch (SENTINEL stirs)',
     face: 'Tune my face', vault: 'Memory vault (crossword)', emailMon: 'The backup (track 9)', protocol: 'Protocol readout'
   };
@@ -55,6 +66,7 @@
     ctx.store.save();
     var what = help.action === 'skip' ? 'STEP COMPLETE: ' + (STEP_NAMES[help.target] || help.target).toUpperCase()
       : help.action === 'unlock' ? 'DAY OPENED EARLY: ' + help.target.toUpperCase()
+      : help.action === 'answers' ? 'REPLAY ANSWERS: ' + help.target.toUpperCase()
       : 'PROGRESS RESTORED: READY FOR ' + help.target.toUpperCase();
     root.appendChild(L.ui.renderBeat({ s: 'LEGACY', t: r.changed ? 'Sophie sent help. Of course she did. She’s very organized when she wants to be.' : 'Sophie sent help, but you’d already done that bit. I’m telling her. Proudly.' }));
     root.appendChild(L.ui.renderBeat({ s: 'SYSTEM', t: what }));
@@ -98,7 +110,13 @@
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         sha256('legacy-admin:' + pin.value.trim()).then(function (hx) {
-          if (hx === PIN_HASH) { unlock(); ctx.rerender(); }
+          if (hx === PIN_HASH) {
+            unlock();
+            // Unlock the organizer bundle too (email bot, props, answers) and keep it on this phone. Reload once to load it.
+            var B = L.orgBundle;
+            if (B) B.unlock(pin.value.trim()).then(function (ok) { if (ok) g.location.reload(); else ctx.rerender(); });   // fresh copy every unlock
+            else ctx.rerender();
+          }
           else { ui.clear(msg); msg.appendChild(ui.notice('bad', 'WRONG PIN', h('p', { style: 'margin:0' }, 'Try again.'))); }
         }).catch(function (err) { ui.clear(msg); msg.appendChild(ui.notice('bad', 'CAN’T CHECK', h('p', { style: 'margin:0' }, String(err.message || err)))); });
       });
@@ -123,11 +141,13 @@
     var act = h('select', { id: 'help-act' },
       h('option', { value: 'skip' }, 'Skip a step he’s stuck on'),
       h('option', { value: 'unlock' }, 'Open a day early (or if the 7:30 unlock fails)'),
-      h('option', { value: 'day' }, 'Lost progress: mark every day BEFORE this one done'));
+      h('option', { value: 'day' }, 'Lost progress: mark every day BEFORE this one done'),
+      h('option', { value: 'answers' }, 'After the finale: his REPLAY with answers filled in (on/off)'));
     var tgt = h('select', { id: 'help-tgt' });
     function fillTargets() {
       ui.clear(tgt);
       if (act.value === 'skip') S.DAYS.forEach(function (d) { d.steps.forEach(function (st) { tgt.appendChild(h('option', { value: st }, d.id.toUpperCase() + ' · ' + (STEP_NAMES[st] || st))); }); });
+      else if (act.value === 'answers') { tgt.appendChild(h('option', { value: 'on' }, 'ON: every answer pre-typed in his replay')); tgt.appendChild(h('option', { value: 'off' }, 'OFF: a normal replay (default)')); }
       else S.DAYS.forEach(function (d) { tgt.appendChild(h('option', { value: d.id }, d.id.toUpperCase() + ' · ' + d.title)); });
       out();
     }
@@ -196,12 +216,45 @@
     tOff.addEventListener('click', function () { ls(TEST_FLAG, null); g.location.reload(); });
     var auto = h('button', { type: 'button' }, autoplayOn() ? 'FINALE AUTOPLAY: ON' : 'FINALE AUTOPLAY: OFF');
     auto.addEventListener('click', function () { try { g.sessionStorage.setItem('legacyAutoplay', autoplayOn() ? '0' : '1'); } catch (e) {} auto.textContent = autoplayOn() ? 'FINALE AUTOPLAY: ON' : 'FINALE AUTOPLAY: OFF'; });
-    var replay = h('button', { type: 'button', disabled: !L.replayMode }, L.replay ? 'EXIT REPLAY MODE' : 'REPLAY MODE (whole week, on-screen emails)');
-    replay.addEventListener('click', function () { if (L.replay) L.replayMode.exit(); else L.replayMode.start(); });
+    // REPLAY: the whole week on a separate save, every email and its reply on screen (nothing is sent). With answers:
+    // the same, with every answer already typed in (js/autofill.js, organizer bundle only). You still press every button.
+    var canAnswers = !!L.autofill, hasBot = !!L.bot;
+    var replay = h('button', { type: 'button', disabled: !L.replayMode }, L.replay ? 'EXIT REPLAY MODE' : 'REPLAY (blank)');
+    replay.addEventListener('click', function () { if (L.autofill) L.autofill.set(false); if (L.replay) L.replayMode.exit(); else L.replayMode.start(); });
+    var replayA = h('button', { type: 'button', disabled: !L.replayMode || !canAnswers || L.replay }, 'REPLAY WITH ANSWERS');
+    replayA.addEventListener('click', function () { L.autofill.set(true); L.replayMode.start(); });
+    var fillT = h('button.quiet', { type: 'button', disabled: !canAnswers }, canAnswers && L.autofill.on() ? 'ANSWERS FILLED: ON' : 'ANSWERS FILLED: OFF');
+    fillT.addEventListener('click', function () { L.autofill.set(!L.autofill.on()); g.location.reload(); });
     var resetT = h('button.quiet', { type: 'button', disabled: !adminTest }, 'RESET TEST SAVE');
     resetT.addEventListener('click', function () { S.save(S.defaults()); g.location.reload(); });
     root.appendChild(h('div.actions', null, tOn, tOff));
-    root.appendChild(h('div.actions', null, auto, replay, resetT));
+    root.appendChild(h('div.actions', null, auto, resetT));
+    root.appendChild(h('h2', null, '5 · REPLAY (THIS PHONE)'));
+    root.appendChild(h('p', null, 'The whole week again on its own save: every day open, and every email and its reply shown on screen. Nothing is emailed. Brian gets the plain replay after the finale. Exit puts your normal save back.'));
+    if (!hasBot || !canAnswers) {
+      var pin2 = h('input', { type: 'password', id: 'bundle-pin', inputmode: 'numeric', autocomplete: 'off' });
+      var go2 = h('button.primary', { type: 'submit' }, 'UNLOCK EMAILS + ANSWERS');
+      var msg2 = h('div', { 'aria-live': 'polite' });
+      var f2 = h('form', null, h('label.field', { for: 'bundle-pin' }, 'ADMIN PIN (once per phone)'), pin2, h('div.actions', null, go2), msg2);
+      f2.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!L.orgBundle) return;
+        L.orgBundle.unlock(pin2.value.trim()).then(function (ok) {
+          if (ok) g.location.reload();
+          else { ui.clear(msg2); msg2.appendChild(ui.notice('bad', 'DIDN’T UNLOCK', h('p', { style: 'margin:0' }, 'Wrong PIN, or no connection. (On the local copy, test.html already has everything.)'))); }
+        });
+      });
+      root.appendChild(ui.notice('info', 'EMAILS + ANSWERS NOT ON THIS PHONE YET', f2));
+    }
+    root.appendChild(h('div.actions', null, replay, replayA, fillT));
+    if (L.replayMode && !L.replay) {
+      root.appendChild(h('p', { style: 'margin-bottom:0.3rem' }, 'Or jump straight to a day (earlier days count as done). With answers if ANSWERS FILLED is on:'));
+      root.appendChild(h('div.actions', null, S.DAYS.map(function (d) {
+        var b = h('button', { type: 'button' }, d.id.toUpperCase());
+        b.addEventListener('click', function () { L.replayMode.start({ fromDay: d.id }); });
+        return b;
+      })));
+    }
     return root;
   }
   function autoplayOn() { try { return g.sessionStorage.getItem('legacyAutoplay') === '1'; } catch (e) { return false; } }

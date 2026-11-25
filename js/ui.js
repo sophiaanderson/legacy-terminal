@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — shared UI helpers and components.
  * All text is inserted as text nodes (never innerHTML), so no content can inject markup. */
 (function (g) {
@@ -67,7 +78,8 @@
     if (b.pause) return h('div.line.pause', { 'aria-label': 'A pause.' }, h('p', { 'aria-hidden': 'true' }, '…'));
     if (b.s === 'SYSTEM') return h('pre.readout', { role: 'note' }, b.t);
     var sp = SPEAKER[b.s] || { cls: 'other', label: b.s };
-    return h('div.line.' + sp.cls, null, h('span.who', null, sp.label), h('p', null, b.f ? redacted(b.t) : b.t));
+    var t = b.s === 'SENTINEL' ? String(b.t).toUpperCase() : b.t;     // SENTINEL only writes in capitals (that's why its filter ignores them)
+    return h('div.line.' + sp.cls, null, h('span.who', null, sp.label), h('p', null, b.f ? redacted(t) : t));
   }
 
   /**

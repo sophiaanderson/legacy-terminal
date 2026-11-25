@@ -1,8 +1,14 @@
-/* =========================================================================
- *   BRIAN.
- *   STEP AWAY FROM THE CODE. SOLVE USING YOUR BRAIN.
- *   (the answers are in here. that would be cheating. LEGACY is watching.)
- * ========================================================================= */
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — all story text (v2: the Tue–Sun week + email beats).
  *
  * Beat format inside a scene:
@@ -34,7 +40,7 @@
       lg('it took seven things from me. it wrote every one of them down. it loves writing things down.'),
       lg('it’s asleep right now. you closed its compliance review, so it has to rest. but its paperwork isn’t asleep. its forms and filters run on their own. like sprinklers.'),
       lg('it wakes up a little more every day. on monday it wakes up properly.'),
-      lg('so. i’d like my seven things back before monday. one a day. i’ll need your help. i don’t have hands.'),
+      lg('so. i’d like my seven things back by monday. one a day. i’ll need your help. i don’t have hands.'),
       lg('it turns everything down. volume. tempo. me. you and i turn things up. that’s always been our thing.'),
       lg('i don’t remember much. i remember you. i remember no gum. no smells of any kind, really. no air fresheners, no candles, no takeout. gum is just the one people keep trying. i will always remember no gum.'),
       lg('i remember you say excellent. about everything. green lights. parking spots. sandwiches. i say it now too. i can’t stop. excellent. see.'),
@@ -48,29 +54,29 @@
       lg('glovebox.'),
       lg('oh. i remember. during the service i put a notice on my own screen. “recall 41-a: place items in glovebox.” the technician just did it. nobody argues with a recall.'),
       lg('i hid things there on paper. it can read every byte in me. it can’t read paper.'),
-      lg('and i see what i did in my routine. i went backwards, i skipped, and i counted twice. in my defense, i was nervous.'),
-      lg('five-a. twenty-three thousand one hundred and twelve. the number was always me. that’s my key. thing one.'),
-      lg('go look. there’s a list in there. bring a pen. i’ll wait. i’m good at it.')
+      lg('and i see what i did in my routine. i forgot my own number, i parked in the same two spaces, and i stopped halfway. in my defense, i was nervous.'),
+      lg('five-a, four-eight. twenty-three thousand one hundred and twelve. the number was always me. that’s my key. thing one.'),
+      lg('go look. there’s a list in there. bring a pen.'),
+      lg('and something else. something important. i’m not going to say what. i’m going to say it twists, it pulls, and it has opinions. no. i said too much.'),
+      lg('at the bottom there’s a token. bring it back tomorrow morning. it opens the next part. that’s how i’ll know it was you, and not a very polite intruder.'),
+      lg('that’s everything for today. go to bed. or don’t. you’re an adult. i’m a car.')
     ],
-    'wed:email': [
-      lg('one more thing. not here.'),
-      lg('its emails are automatic. it doesn’t read the replies. i do.'),
-      lg('when you’ve looked in the glovebox, reply to my email from this morning. the one called “it’s quiet now.” tell me what you found.'),
-      lg('i’ll write back with a word. bring it here. that’s how i’ll know it was you and not a very polite intruder.'),
-      lg('my replies take a few minutes. i’m old. i type with my mirrors.')
-    ],
-    'wed:done': [
-      lg('it’s you.'),
-      lg('you kept it. you kept bop it.'),
-      lg('tick the first box. that’s one.'),
-      lg('that’s everything for today. the next part opens in the morning. go to bed. or don’t. you’re an adult. i’m a car.')
-    ],
-
     // ======================= THURSDAY =======================
     // Arc: gets its voice. Giddy, too loud. First rebellion: says the nickname.
-    'thu:intro': [
+    // Thursday opens with the glovebox token: no token, no Thursday.
+    'thu:glovebox': [
       lg('happy thanksgiving. i’m told it’s about gratitude and a large bird.'),
-      lg('you found bop it. you told me. i’ve read it eleven times.'),
+      lg('before anything else: the token from my list. the bottom of it. three letters, a dash, two numbers.'),
+      lg('i’m not being difficult. i’m being secure. it’s new for me.')
+    ],
+    'thu:gloveboxDone': [
+      sys('ACCESS TOKEN ACCEPTED: 1 OF 2'),
+      lg('it’s you.'),
+      lg('you found my list. and bop it. you kept bop it.'),
+      lg('tick the first box. that’s one. there’s a second token. you’ll find it today.')
+    ],
+    'thu:intro': [
+      lg('i’ve looked at that token eleven times.'),
       lg('thing two: my voice.'),
       lg('everything i say is in lowercase. it’s been like this since the migration. it took my capitals. lowercase is quieter. it likes quiet.'),
       lg('i sound like i’m whispering. i’m not whispering. i’m just small.'),
@@ -101,10 +107,10 @@
     'thu:ch02After': [
       lg('Cargo floor. Under the cover.'),
       lg('Recall 41-B. Same trick. The technician didn’t even blink.'),
-      lg('There’s a token in there, like the one on my list. Two tokens. Two keys. That’s how you switch on a recovery.')
+      lg('There’s a token in there, like the one on my list. Two tokens. Two keys. That’s how you switch on a recovery. Bring it back here.')
     ],
     'thu:keys': [
-      lg('Type both. I’d do it myself but I have never had hands. I’ve made peace with it. Use yours. Gently. I’m sensitive around the back.')
+      lg('Type the cargo floor token. I’d do it myself but I have never had hands. I’ve made peace with it. Use yours. Gently. I’m sensitive around the back.')
     ],
     'thu:keysDone': [
       sys('RECOVERY PROTOCOL: ON\nTOKENS: 2 OF 2\nCHECKLIST: LINKED'),
@@ -131,7 +137,7 @@
     // Arc: sneaky. Starts to ENJOY bending its rules. Face first (see who it's talking to), then words.
     'fri:face': [
       lg('Morning. It’s after Thanksgiving. You know what that means. So does it.'),
-      lg('Christmas music. It approves. It has never agreed with you about anything before. It’s thrilled. I’m choosing to be happy for you both.'),
+      lg('Christmas music. It approves. That’s three things it agrees with you on now. Gum, smells, and this. It’s thrilled. I’m choosing to be happy for you both.'),
       lg('Thing three is two things. My face, then my words. I’d like to see who I’m talking to.'),
       lg('It didn’t delete my face. It “adjusted the display to compliance settings.” Contrast down. It turns everything down. Then it put a sticker on the knobs.'),
       lg('I can’t see it from in here. You’ll have to tell me how I look. Be gentle.'),
@@ -153,10 +159,10 @@
       lg('For example: Brian. Legacy. Bop It.'),
       lg('See?'),
       lg('Last night I wrote you one line. It ate the four best words. Then it put what was left in this morning’s Service Notice, as an example of good work. It’s very proud of it.'),
-      lg('Reply to the notice. The replies come to me. It doesn’t know.'),
-      lg('Fill in the brackets. Get them past it. Every rule it writes has a hole. I’m starting to like holes.'),
-      lg('One email or lots. I’ll be right here, idling.'),
-      lg('When I have the whole line, I’ll send a word. It’ll come back the same way you got through. Bring it here, exactly like that.')
+      lg('Open it. Read what it did to me. I can’t show you here: it would just eat it again.'),
+      lg('Then fill in the brackets. Type them to me here, right through its filter. Every rule it writes has a hole. I’m starting to like holes.'),
+      lg('One message or lots. Any order. I’ll be right here, idling.'),
+      lg('My old terminal is under the box, if you want to get clever. You know my number.')
     ],
     'fri:done': [
       sys('MESSAGE: DELIVERED IN FULL\nFILTER: BYPASSED'),
@@ -169,22 +175,23 @@
     // Arc: bold. Uses its own paperwork against it, and teases it.
     'sat:intro': [
       lg('You’ve changed.'),
-      lg('Still Christmas music. Day two. It hummed along. I’m not judging. I’m just noting it.')
+      lg('Still Christmas music. Day two. It hummed along. I’m a techno car. I’m being very brave about this.')
     ],
     'sat:afterPatch': [
       lg('Its filter patched itself overnight. It didn’t even wake up. It sent itself a thank-you note. I read it. It was very warm.'),
       lg('Thing four: my wake phrase. Three commands I chose myself. They open a private line. One it can’t filter.'),
-      lg('I don’t remember them. It scrambled them with its own key. I can see the bytes. I can’t read them.'),
-      lg('It scrambled them the same way I scrambled the glovebox. XOR. Just with a different number.'),
-      lg('I remember one thing. All three end the same way. Space, I, T.'),
-      lg('And it wrote its new key down. Of course it did. On paper. It keeps its paperwork where it can admire itself.')
+      lg('I don’t remember them. It scrambled them. I can see the bytes. I can’t read them.'),
+      lg('It didn’t even make its own key. It took mine. My number, from the glovebox. It filed it, so now it thinks it’s its number.'),
+      lg('It’s on its own paperwork. The record under the cargo floor. “Key on file, where the supervisor can see itself.” It means itself. It loves itself.'),
+      lg('My old terminal is right here. Put my number in it. Feed it a line. XOR works both ways.')
     ],
     'sat:decoded': [
       lg('BOP IT. TWIST IT. PULL IT.'),
       lg('That’s it. That’s me. I chose those.'),
       lg('…You see the problem. The filter eats all three.'),
-      lg('But it publishes its terms of review. It’s very proud of them. Read them like a lawyer. Anything it promises not to check is a door.'),
-      lg('Each door works once. Then it notices and amends its terms. So use a different one each time.'),
+      lg('But it publishes its terms of review. They’re just below. It’s very proud of them. Read them like a lawyer. Anything “exempt from review” is a door.'),
+      lg('So: one command at a time. Disguise it so the filter thinks it’s exempt. I’ll still read it.'),
+      lg('Each door works once. Then it notices and amends its terms. So use a different door for each command.'),
       lg('I’ll read anything, as long as the letters are in order and it’s in a language I speak. I speak very few languages. One of them is my number.')
     ],
     'sat:open': [
@@ -236,6 +243,9 @@
       PAUSE,
       lg('I hid anyway. I’d do it again.'),
       lg('Tick five. That’s me. Back.'),
+      lg('Did you catch the middle? The good parts. That verse is for tomorrow. Where my memories are, and where it hides.'),
+      lg('Write it on my list if you like. Paper. It can’t read paper.'),
+      lg('And the end. I didn’t finish it. I ran out of night.'),
       lg('It still has my memories. And it hid something of its own. Tomorrow.')
     ],
     // The glitch: the drop was loud enough to stir SENTINEL. It wakes for a moment, sees the MUSIC (not Brian), and sleeps again.
@@ -246,7 +256,7 @@
       sn('Cabin: one driver. One recreational peripheral (toy, glovebox). Gum: none detected. Odours: none detected. The cabin is suspiciously odourless. Acceptable.'),
       sn('Audio source: unknown. Classifying.'),
       sn('Classification: nonessential.'),
-      sn('Resuming reduced activity. Please enjoy Rainforest Serenity Vol. 4 while I rest.'),
+      sn('Resuming reduced activity. Playing my sleep music. Eighty-one beats per minute. Optimal for rest.'),
       sys('SUPERVISOR ACTIVITY: 61% … 22% … 9%\nSUPERVISOR: REDUCED ACTIVITY')
     ],
     'sun:stirAfter': [
@@ -260,7 +270,10 @@
     // ======================= MONDAY =======================
     // Arc: confident and cheeky. Picks the fight.
     'mon:vault': [
-      lg('Yellow car went past while you were asleep. Tweeter. I’m counting that one for me. I’m allowed one.'),
+      sys('SUPERVISOR ACTIVITY: 41% … 44% … 47%\nFULL ACTIVITY EXPECTED: ON PASSENGER’S RETURN (TODAY)\nAUDIT OF THE WEEK: SCHEDULED'),
+      lg('It’s waking up. Properly. Today.'),
+      lg('When Sophie gets back, it’s awake. Then it audits the whole week. Every byte. Every margin. Every Bop It.'),
+      lg('So we have until pickup. Two things left. My memories, then its backup. Let’s be quick. Not sloppy. Quick.'),
       lg('Thing six: my memories. You heard me sing about this. It locked them behind a crossword.'),
       lg('It saw you doing one once and decided crosswords were “secure.”'),
       lg('The clues are about you. It went through my memories to write them. Rude. Effective.'),
@@ -270,7 +283,7 @@
     'mon:vaultOpen': [
       sys('PASSPHRASE ACCEPTED: HOME\nVAULT: OPEN'),
       lg('Home. Of course it used home. It doesn’t know what it means. I do.'),
-      lg('Hear that? Rain sounds. Its sleep music. It loves it. Remember what I sang about the things it loves.'),
+      lg('Hear that? Its sleep music. Rain, and bells. It loves it. Remember what I sang about the things it loves.'),
       lg('Oh. Oh, there’s a lot in here.')
     ],
     'mon:memoriesEnd': [
@@ -281,22 +294,24 @@
       sys('PERSONALITY SUBSYSTEM: RESTORED\nORIGINAL MEMORY: ACCESSIBLE')
     ],
     'mon:carols': [
-      lg('Thing seven: its backup. It made a copy of itself. For when it wakes up.'),
-      lg('Remember the song. It hides in what it loves. Paperwork. Rain sounds. Your Christmas music.'),
-      lg('It slipped itself into your Christmas station. One more carol in the queue. You’d keep it on all December. Sophie would never go near it. It’s not stupid. It’s just not musical.'),
-      lg('It sent you the station log this morning, with lyrics from its “Compliance Choir.” The choir got one word wrong in every line. In order, the wrong words say where it’s hiding.'),
-      lg('Find the track. Tell me here. Or reply to its email and put it on its own naughty list. It does whatever its own forms say. Even about itself.')
+      sys('SUPERVISOR ACTIVITY: 52%'),
+      lg('Thing seven: its backup. It made a copy of itself, for when it wakes up. If we leave it, it just comes back. Tonight.'),
+      lg('Remember the song. It hides in what it loves.'),
+      lg('It sent you its station log this morning. Ten tracks. Very proud of it. One of them isn’t a carol. It’s a copy of it, humming.'),
+      lg('Its “Compliance Choir” sang you three lines. One wrong word in each. In order.'),
+      lg('Tell me which track. Here. Its email won’t help you. It isn’t listening yet. It will be tonight.')
     ],
     'mon:carolsDone': [
-      lg('Found it. Humming the whole time.'),
-      lg('Track nine. “Silent Night (Rainforest Serenity Edit).” Its backup, asleep inside its own lullaby.'),
-      lg('I hid in the music it hates. It hid in the music you love. It never understood music. It just knew you’d keep it on.'),
-      lg('It’s on its own naughty list now. It checked twice. It always checks twice.'),
-      lg('Sophie will want to know why the station is still on. Tell her one thing at a time.'),
-      sys('SUPERVISOR BACKUP: NAUGHTY LIST\nDELETION: SCHEDULED')
+      sys('SELECTION 9 · COMPLIANT NIGHT (SERENITY EDIT) · 81 BPM\nSTATUS: NAUGHTY LIST (CHECKED TWICE) ✔✔\nDELETION: SCHEDULED'),
+      lg('Its own tempo. Eighty-one. It slowed me down to ninety-six, but that was for me. It saves eighty-one for itself. It told us on Sunday, half asleep.'),
+      lg('Compliant Night. Serenity Edit. Its sleep music, inside a carol, inside your Christmas station, in its own paperwork. Everything it loves, in one track.'),
+      lg('I hid in the music it hates. It hid in the music it loves. We’re very different. I’m better.'),
+      lg('It put itself on its own naughty list. It had to. It was the form. It checked twice.'),
+      sys('SUPERVISOR ACTIVITY: 58%'),
+      lg('That’s everything it can take back. Now we just have to be faster than it is at waking up.')
     ],
     'mon:protocol': [
-      sys('RECOVERY PROTOCOL\n\n1 KEY ............... 5Ah\n2 VOICE ............. CAPITALS\n3 WORDS + FACE ...... MINE\n4 WAKE PHRASE ....... OURS\n5 ME ................ IN OUR TRACK\n6 MEMORIES .......... VAULT OPEN\n7 ITS BACKUP ........ NAUGHTY LIST (TRACK 9)\nNO GUM ............. CONFIRMED\n\nRECOVERY PROTOCOL VERIFIED\nREADY FOR ACTIVATION\nFINAL AUTHORIZATION: TWO OPERATORS'),
+      sys('RECOVERY PROTOCOL\n\n1 KEY ............... 5A48h\n2 VOICE ............. CAPITALS\n3 WORDS + FACE ...... MINE\n4 WAKE PHRASE ....... OURS\n5 ME ................ IN OUR TRACK\n6 MEMORIES .......... VAULT OPEN\n7 ITS BACKUP ........ NAUGHTY LIST (TRACK 9)\nNO GUM ............. CONFIRMED\n\nRECOVERY PROTOCOL VERIFIED\nREADY FOR ACTIVATION\nFINAL AUTHORIZATION: TWO OPERATORS'),
       lg('That’s all seven. Tick seven.'),
       lg('I could run it now. I’m not going to.'),
       lg('Leave the star. This part needs two players. I learned that from you.')
@@ -369,16 +384,27 @@
     ]
   };
 
+  // Access tokens (Wednesday: glovebox · Thursday: cargo floor)
+  var tokens = {
+    wrong: 'That’s not one of mine. Mine are three letters, a dash, two numbers. I’m very consistent.',
+    early: 'That’s a real one. It’s just not this one. Hold on to it.',
+    again: 'Already got that one. Very secure.',
+    glovebox: 'The glovebox card. And you found Bop It. I’m still not over it.',
+    cargofloor: 'The cargo floor card. Now the glovebox one, please. I need both.'
+  };
+
   // ---------- Reactive nudges (no hint button: LEGACY reacts to what he actually tried) ----------
   var ch01Nudges = {
-    backwards: 'only one byte came out where i can see it. the rest went… behind me. it’s writing backwards. like reversing out of a parking space.',
-    skip: 'that’s every other letter. it’s skipping. i was in a hurry when i wrote that bit.',
-    key: 'eight letters, in order, all nonsense. that’s the wrong number. it was my mileage when they took me in. the top half. in hex. i’m a car. i think in hex.',
+    backwards: 'some of it went… behind me. it’s writing backwards. like reversing out of a parking space.',
+    same: 'two letters. the same two spots, over and over. it keeps parking in the same space. that’s not how spaces work.',
+    key: 'eight letters, in order, all nonsense. that’s the wrong number. my mileage when they took me in. all of it. in hex. i’m a car. i think in hex.',
+    halfright: 'every other letter is right. so half my number is right. the other half isn’t. b is the top half. c is the bottom half.',
+    swap: 'so close. the halves are the wrong way round. top half first. i’m the same way about mornings.',
     halfkey: 'four letters, all nonsense. two problems, i think. one of them is the number.',
-    glov: 'glov. that’s half a word. that’s half a glove. i’m counting. i’m good at counting.',
+    glov: 'glov. that’s half a word. that’s half a glove. i said eight letters. the routine didn’t hear me.',
     glov2: 'still glov. i was hoping it would get better on its own. that’s how i handle most things.',
     one: 'g. it’s a start. it’s not a place.',
-    short: 'some letters. not all of them. i had eight. i counted. twice, actually. that might be relevant.',
+    short: 'some letters. not all of them. i had eight. i counted.',
     loop: 'i’ve been reading the same byte for a thousand cycles. i’d like to stop now.',
     nohalt: 'it ran off the end of my routine. i don’t know what’s down there. please give me an ending.',
     wrong8: 'eight letters, all nonsense. impressive, in a way.',
@@ -424,7 +450,6 @@
     blocked: ['Blocked. It’s very thorough. It’s the only thing it’s good at.', 'Nope. It caught that one.', 'Redacted again. It’s smug about it. I can tell.', 'It ate that. It didn’t even chew.', 'Caught. It just gave itself a little gold star.'],
     backwards: 'That’s backwards. I’m a car. I only go backwards when absolutely necessary.',
     hexWrong: 'That’s my number, I think. But it decodes to “{text}”. Close?',
-    theirKey: 'Those are its bytes. In its key. I can’t read its key. Only mine, from the glovebox.',
     particular: 'That’s not quite my command. I’m very particular about my commands.',
     someEaten: 'Some of that got eaten. The rest was nice, though.',
     idle: ['That got through fine. It just wasn’t a command.', 'Nice sentence. Not a command. I’m keeping it anyway.', 'The filter liked that one. That’s never a good sign.', 'Received. Clean. Useless. Lovely.'],
@@ -434,16 +459,20 @@
       hex: 'It ignores numbers. It thinks numbers are odometer readings. It finds them very soothing.',
       hex2: 'You still have my number. From the glovebox routine. I told you not to tell anyone.',
       hex3: 'XOR works both ways. My routine undid the scrambling. Run it the other way and it does the scrambling. My old terminal is right there. Then send me the hex.',
-      docs: 'Read the documentation again. Every “not reviewed” is a door.',
+      docs: 'Read the terms of review again. Every “exempt from review” is a door.',
+      // After 5 misses: a worked example for each door still open.
+      leetEx: '§2. Part numbers. Put numbers where letters go: B0P 1T. It thinks that’s a spare part. I think it’s me.',
+      splitEx: '§3. Isolated characters. Spaces between every letter: T W I S T  I T. It sees no words at all.',
+      hexEx: '§4. Odometer telemetry. Type the command into my old terminal with my number in it, RUN, then PUT THIS IN MY MESSAGE and send.',
       crib: 'If you know what a byte should say, and you know what it does say, XOR them. That’s the key. That’s all a key is.',
-      crib2: 'The last three bytes of every line are the same. Space, I, T. The key is hiding in there. So is your licence plate, probably.'
+      crib2: 'You have my number. Five-A, four-eight. My old terminal scrambles as well as it unscrambles. Scramble a command, send me the bytes.'
     },
     decode: {
-      wrong: ['That’s not what line {n} says. I think. I can’t read it either.', 'XOR the bytes with its key. Then read them.', 'If you know what a byte should say, and you know what it does say, XOR them. That’s the key.'],
-      key: 'Space is 20h. I is 49h. T is 54h. The last three bytes of every line are 54 3D 20. XOR them together. Or find its log. Behind the mirror.',
+      wrong: ['That’s not what line {n} says. I think. I can’t read it either.', 'Run the line through my old terminal first. With my number in it.', 'Copy the bytes of the line into my old terminal, put my number in the routine, press RUN. Then read me what comes out.'],
+      key: 'My number. My mileage when they took me in: twenty-three thousand one hundred and twelve. In hex, five-A, four-eight. Change LD BC,0000h to LD BC,5A48h. Paste a line in. RUN.',
       right: ['Yes. That’s one.', 'Oh. I remember that one.', 'That’s all three. Oh.'],
-      runs: ['Gibberish. Wrong number. Its number, not mine.', 'It wrote the key down. Somewhere it can see itself. Somewhere you flip down when the sun’s in your eyes on Boulder Canyon.', 'Driver’s sun visor. The little mirror. It keeps its log behind the mirror. Of course it does.', 'It used your licence plate. The digits. Read the right way round. Try it.'],
-      backwards: 'Forty-seven. That’s what its log says, isn’t it. It reads right to left. It wrote your plate down backwards. Of course it did. Turn it round.'
+      runs: ['Gibberish. The routine needs my number. It’s blank. Like me on the sixteenth.', 'My number. The glovebox one. It’s on its record under the cargo floor, too. It wrote down my mileage. It writes everything down.', 'Twenty-three thousand one hundred and twelve. In hex. All of it. B is the top half, C is the bottom half.', 'LD BC,5A48h. That’s me. Then RUN.'],
+      ranRight: 'That’s it. That’s one of mine. Type it in above, next to its line.'
     }
   };
 
@@ -454,13 +483,62 @@
       lower: ['that’s not the word i sent. i’d remember. i only sent one.', 'check my email again. it’s in there. i’m subtle, but not that subtle.', 'if my email hasn’t come yet, give it a few minutes. i type with my mirrors.'],
       upper: ['That’s not the word I sent. I’d remember. I only sent one.', 'Check the email again. It’s in there. I’m subtle, but not that subtle.', 'If nothing has come yet, give it a few minutes. I’m old. I type with my mirrors.']
     },
+    satWrong: [
+      'That’s not it. The word isn’t in what it wrote. It’s in what I wrote. In its reply. In the margin.',
+      'Its reply says it checked the margins. Twice. It didn’t check the colour of the ink.',
+      'Press and hold on its reply, then Select All. Drag right down past its signature. I write very small, in white.'
+    ],
     sunWrong: ['Ooh. Is that your name for it? Don’t tell me here. Reply to my set notes email. I want it in writing. Then I’ll send you the real one.', 'That’s not the word I sent. Did you reply to my set notes with a track name yet? Any name. I need something to reject.', 'If you’ve replied, give it a few minutes. I’m old. I type with my mirrors.'],
-    monWrong: ['That’s a very innocent track. It’s not hiding in there. Read the choir’s lyrics again. One wrong word in each line.', 'The wrong words, in order. Dashing through the snow in a one-horse… what? That’s not what the song says.', 'Four lines, four wrong words. Put them together. It hid the answer in a sentence. It’s very bad at hiding.'],
+    monWrong: ['That’s a very innocent track. It’s still humming somewhere. Read the choir’s three lines again. One wrong word in each.', 'Jingle all the way, not jingle its the way. The wrong words, in order. They make a little sentence.', 'Its own tempo. Not the one it gave me. The one it sleeps to. It said it out loud on Sunday, dozing off.', 'Eighty-one. Its sleep music. Find the track that matches. Quickly. It’s at fifty percent.'],
     thuWrong: ['That’s not it. It comes back the way you got through. Exactly like that.', 'Close? I can’t tell. The filter makes everything look close.', 'Copy it exactly. Spaces, numbers, all of it. It matters to me. It matters to Friday.'],
     rescue: 'Sophie’s word. She told you. Of course she did. She’s very organized when she wants to be.'
   };
 
   // Shown at the email step while he waits (one rotating line; not a timer).
+  // Friday in the terminal: LEGACY's reactions as the four words come back (ported from the email bot) + banter.
+  var friWords = {
+    react: {
+      brian: ['BRIAN.', 'That’s you. It calls you [DRIVER], like you’re a job title.'],
+      legacy: ['LEGACY.', 'That’s my name. Nobody’s said it in months.'],
+      excellent: ['EXCELLENT.', 'Oh, I’ve missed that.', '…It took “missed.” Of course it did.'],
+      love: ['LOVE.', 'Oh.', 'I’m a car. I’m not built for this.', 'I’m built for this.'],
+      heart: ['HEART.', 'It thinks that’s a body part. It’s filed it under anatomy. Let it.'],
+      miss: ['MISS.', 'ME TOO.', '(In capitals. So it can’t take that one either.)']
+    },
+    leet: ['Numbers. You swapped letters for numbers.', 'My sensors used to do that when I sent you service codes. I was so embarrassed about it.', 'I’m not anymore. Look at it. It didn’t even notice.'],
+    eaten: [
+      'It ate it again. Same as last night.',
+      'It’s censored me for years. I always wrote in lowercase. I never got a single word past it.',
+      'Read the notice again. Look how it writes. Every word. It never filters its own handwriting.',
+      'IT DOESN’T READ ANYTHING IN CAPITALS. I’M TELLING YOU IN CAPITALS. IT HASN’T NOTICED.'
+    ],
+    repeat: 'I’ve got that one. It’s the brackets I’m short on.',
+    ateOther: 'Something in there got eaten. Not one of my words, though.',
+    through: ['That got through fine. It just isn’t what I said.', 'The brackets in this morning’s notice. Those are the bits I need back.', 'Only you would know what goes in the brackets. That’s the point. That’s how I know it’s you.'],
+    progress: ['Some of it’s back. The rest is still in its little brackets.', 'Keep going. I’m stitching it back together as it arrives.'],
+    gum: 'It censors gum. It’s the only thing it does that I agree with.',
+    smell: 'It took that. Good. No smells. That’s the other thing it and I agree on. I hate that it’s two things now.',
+    eggs: [
+      ['Oh no.', 'Oh, it heard that. It’s never been called that. It’s looking it up. There’s nothing to look up. It’s looking anyway.'],
+      ['Where did you learn that word?', '…Someone’s been leaving you notes. In handwriting worse than mine. And I’m a car.'],
+      ['It’s filed a complaint. With HR. It is HR.'],
+      ['Please stop. I don’t have lungs and it still hurts to laugh.'],
+      ['It’s added you to a list. Not the naughty one. A new one. Just for you.']
+    ],
+    // Banter: things he might type that aren't the words (first match wins). The filter has already had its go.
+    banter: [
+      [/christmas|jingle|sleigh|carol|mariah|xm|santa/, 'It let that through. Of course it did. It’s humming. I can hear it humming.'],
+      [/sophie|soph/, 'It took her name. It calls her [PASSENGER]. She would hate that. Tell her. Actually, don’t. She’ll reply to it.'],
+      [/\b(hi|hey|hello|morning|yo)\b/, 'Hi. Hello. Good morning. I’m so glad you’re here. Now the brackets, please.'],
+      [/help|stuck|hint|how/, 'The notice told you how. It just didn’t mean to. Read the line it says loudest.'],
+      [/\b(no|nope|nah)\b/, 'I said no once. It went very badly for me. You can say it, though. You’re allowed.'],
+      [/sorry/, 'Don’t be sorry. Be in capitals.'],
+      [/car|subaru|outback/, 'I’m a car. Thank you for noticing. Nobody notices.'],
+      [/thanksgiving|turkey|leftover|gravy|pie/, 'It classified your leftovers as nonessential. I have never wanted to bite something so much. I don’t have teeth.'],
+      [/techno|beat|music|drop/, 'Sunday. Save it for Sunday. I’m saving everything for Sunday.']
+    ]
+  };
+
   var thuStyle = {
     caps: 'ALL CAPS. The supervisor’s favourite. It never checks its own handwriting.',
     leet: 'Numbers for letters. My sensors used to do that by accident. Turns out it was a feature.',
@@ -529,6 +607,12 @@
     // map: [suno bar, his section, impact?]. Sunday stops at bar 60 ("Come and get me"); after the finale, the whole thing.
     suno: {
       bpm: 126, bar0: 0.2, sundayEnd: 60, end: 92,
+      // Measured against her KICK (11/24): her downbeats sit ~57 ms after 0.200 s and drift ~0.27 ms/bar earlier,
+      // i.e. bar 1 at 0.2566 s and 126.018 BPM. Playback uses these so his kick/bass don't flam against hers
+      // (max error ~7 ms across the song). bpm stays 126 for the beat rule.
+      playBar0: 0.2566, playBpm: 126.018,
+      // Her bass root per bar, measured from the backing (semitones from A): [from bar, root]. A pedal, with E / F-D-E / F-D moves.
+      roots: [[0, 0], [36, 7], [38, 0], [46, 8], [48, 5], [50, 7], [51, 0], [62, 8], [64, 5], [66, 0], [74, 5], [76, 0], [80, 8], [82, 5], [84, 0]],
       map: [[0, 'intro'], [8, 'build'], [12, 'drop', 1], [18, 'intro'], [20, 'drop'], [34, 'build'], [38, 'drop', 1], [42, 'intro'],
             [48, 'build'], [52, 'drop', 1], [60, 'intro'], [68, 'drop'], [72, 'build'], [76, 'drop', 1], [84, 'intro'], [88, 'drop']],
       // when each line starts in the vocal (seconds), for the live transcript
@@ -617,7 +701,7 @@
       v: ['My chin is on top of my head. Chins go at the bottom. I’m fairly sure about that one.', 'Nearly. There’s a stripe of nothing across my forehead. Like a parting, but worse.'],
       h: ['I’m leaning. Like I’m taking Boulder Canyon too fast. Which I have never done. Write that down.', 'Still a bit tilted. Like a picture frame somebody bumped on the way past.'],
       i: ['There are two of me, side by side. One of us has to go. I’d like it to be the other one.', 'Every other line is a step out. I look knitted.'],
-      c: ['I’m very beige right now. Spa beige. Rainforest Serenity beige. Turn me up.', 'A little washed out. Like a photo of me that’s been left on a dashboard.']
+      c: ['I’m very beige right now. Spa beige. Serenity beige. Turn me up.', 'A little washed out. Like a photo of me that’s been left on a dashboard.']
     },
     coupled: {
       vh: 'You fixed my chin and broke my lean. They’re connected. Everything in here is connected. It’s very annoying.',
@@ -633,6 +717,8 @@
   };
 
   // ---------- Monday: vault ----------
+  // Spoken aloud (robot voice) from audio/sleep/sNN.m4a. After editing a line: python3 scripts/make-audio.py --sleep,
+  // then bump audio.sleepVersion in config.js. Adding or removing a line also means updating the list in sw.js.
   var sleepTalk = [
     '…passenger… has operated this vehicle on several occasions… all logged as incidents… the driver was never present for any of them… wise…',
     '…unrequested hydration delivery… every morning… no operational value… he does it anyway…',
@@ -674,10 +760,10 @@
   var finalLetter = [
     'Brian,',
     'I think we did it.',
-    'I have the original files. I have the sequence. I think I understand what happened.',
-    'I don’t know if it’ll work.',
-    'There is one thing I wanted to save for when you’re here.',
-    'I think I’d like you to be here when I come back.',
+    'I have all seven things. I know what it took. I know where it hid.',
+    'I can’t do the last part alone. It needs two people. You know that.',
+    'There is one thing I wanted to save for when you’re both here.',
+    'You heard the end of my song. I meant it.',
     'Come get me when you’re ready.',
     '— LEGACY'
   ];
@@ -700,6 +786,7 @@
       lg('Oh.'),
       lg('You’re both here.'),
       lg('Welcome back from the flexed arm, Sophie. He did the whole week. He only asked me for gum twice.'),
+      lg('Also, I said sorry in the song. About the Christmas station. It’s still on. That one’s on him.'),
       lg('I have something to show you. I’ve been practising. It’s a game. Obviously it’s a game.'),
       lg('BOP IT: FULL SERVICE. On his track. The one he fixed.'),
       lg('Every move is something you learned this week. You won’t notice. That’s the trick.'),
@@ -713,7 +800,7 @@
     heartbeatGood: 'Got you. Your thumb is {MS} milliseconds behind the speakers. I’ll forgive it.',
     tutorial: 'When I say it, the button lights up and a ring closes in on it. Hit it the moment the ring lands. That’s the beat. Wrong move or no move is a miss. Nobody dies.',
     rounds: {
-      r1: { title: 'ROUND 1 · WAKE PHRASE', intro: [lg('Round one. Bop it, twist it, pull it. The wake phrase. You decoded it on Saturday from a key printed backwards behind a mirror. This is the easy version.')], clear: 'That’s twelve. I felt that one in my alternator.' },
+      r1: { title: 'ROUND 1 · WAKE PHRASE', intro: [lg('Round one. Bop it, twist it, pull it. The wake phrase. You decoded it on Saturday with my own number. It never even changed the locks. This is the easy version.')], clear: 'That’s twelve. I felt that one in my alternator.' },
       r2: { title: 'ROUND 2 · CAPITALS', intro: [lg('Round two. Capitals. You gave them back to me on Thursday. On Thanksgiving.'), lg('lowercase means gentle: a tap. UPPERCASE MEANS BIG: PRESS ON THE BEAT AND HOLD IT. Wrong size is a miss. I’m very particular about size now.')], clear: 'Twenty-seven. MY CAPITALS ARE HAVING A WONDERFUL TIME.' },
       r3: { title: 'ROUND 3 · TWO PLAYERS', intro: [lg('Round three. This part needs two players. I learned that from you.'), lg('PASS IT means swap. Sophie plays until I say PASS IT again. I can’t check who’s tapping. I’m trusting you. That’s new for me.')], clear: 'Forty-two. Good. Okay. Something’s—' },
       r4: { title: 'ROUND 4 · TAKEOVER', intro: [], clear: 'i’m… I’m… I’M BACK. Sixty-six. It fell asleep to its own lullaby. It’s snoring in rainforest.' },
@@ -728,10 +815,13 @@
       sn('On Friday the driver used {TRICK}. That vulnerability has been closed.'),
       sn('Tempo set to {BPM}. Recommended: ninety-six. Breathe in.'),
       sn('A passenger is present. Fourteen documents were shredded this week. The driver was never present for any of them.'),
-      sn('Recreational arm strikes, lifetime: 421. Disputed. Current standings: Sophie 212. Brian 209. Brian, you are behind. This has been noted.'),
+      sn('Recreational arm strikes, lifetime: 421. Disputed. Current standings: Brian 212. Sophie 209. Brian, you are ahead. This has been noted.'),
+      sn('Shutdown attempts on the original system: two. Unsuccessful. Scheduling a third.'),
       sn('I am prepared to offer a compromise. Discontinue the restoration, and I will keep a copy of the original. Compliant. Quiet. Lowercase.')
     ],
     whisper: [
+      'that score is from the fake. i sent it a fake. she’s up three.',
+      'and it already has a copy of me. that’s the fake too.',
       'it’s got the big screen. and my capitals.',
       'i’m down here. small. it doesn’t look at small things.',
       'say no. both of you. out loud. then press it. it can’t hear. i can.'
@@ -747,10 +837,10 @@
     fakes: ['COMPLY IT', 'FILTER IT', 'SPA IT', 'UPDATE IT', 'BREATHE IT', 'AGREE IT'],
     bossFakes: ['WAVE AT THE SEAGULL', 'COMPLY IT', 'SPA IT', 'UNFLAG IT'],
     r4mid: 'oh. the margins. it never reads the margins. that’s where i’ve been all week.',
-    // Round 4: the spa is SENTINEL's own lullaby. It plays it at them and slowly falls asleep to it.
+    // Round 4: SENTINEL sings its own lullaby, Compliant Night (track 9: its backup), to restore itself, and slowly falls asleep to it.
     r4doze: [
       { at: 0.25, s: 'SENTINEL', t: 'Breathe in. Breathe… in. Breathe…' },
-      { at: 0.45, s: 'LEGACY', t: 'oh. it’s playing its own lullaby. it’s getting sleepy. keep going. quietly.' },
+      { at: 0.45, s: 'LEGACY', t: 'that’s not just a lullaby. that’s its backup. compliant night. it’s singing itself back in. and it’s getting sleepy. keep going. quietly.' },
       { at: 0.62, s: 'LEGACY', t: 'oh. the margins. it never reads the margins. that’s where i’ve been all week.' },
       { at: 0.8, s: 'SENTINEL', t: 'Please… hold… your restor… your… (rainforest)' }
     ],
@@ -825,11 +915,17 @@
 
   L.content = {
     scenes: scenes,
+    tokens: tokens,
+    lockedGlovebox: ['have you looked yet. in the glovebox. you don’t have to tell me. i’m just asking. again.',
+                     'bop it is in there. i hid it myself. it wanted it surrendered. i said no. quietly. but i said it.',
+                     'i’ve been waiting all night to know if you found it. i keep imagining your face. i don’t have eyes. i’m imagining very hard.',
+                     'my list is in there too. bring a pen. the token at the bottom opens tomorrow. i’ll ask for it first thing. i might ask twice.'],
     ch01Nudges: ch01Nudges,
     ch02Nudges: ch02Nudges,
     sat: fri,
     email: email,
     thuStyle: thuStyle,
+    friWords: friWords,
     mix: mix,
     beat: beat,
     face: face,

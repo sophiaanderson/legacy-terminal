@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — SENTINEL content filter (Quiet Channel). Pure logic, no DOM.
  * The same logic is copied into apps-script/Phase3.gs for Thursday-by-email. Keep them in sync.
  *
@@ -32,8 +43,14 @@
 
   function leet(s) { return s.replace(/[0-9@$]/g, function (c) { return LEET[c] || c; }); }
   function isHexMessage(s) { return /^\s*([0-9a-f]{2}[\s,]*){2,}$/i.test(s); }
+  // LEGACY's key: the whole mileage 5A48h (alternating 5Ah / 48h), or just the top half 5Ah (the one-byte scratch pad).
+  // Whichever reads as more letters wins.
   function hexDecode(s) {
-    return (s.match(/[0-9a-f]{2}/gi) || []).map(function (h) { return String.fromCharCode(parseInt(h, 16) ^ 0x5A); }).join('');
+    var b = (s.match(/[0-9a-f]{2}/gi) || []).map(function (h) { return parseInt(h, 16); });
+    var dec = function (k) { return b.map(function (x, i) { return String.fromCharCode(x ^ k[i % k.length]); }).join(''); };
+    var score = function (t) { return (t.match(/[A-Za-z ]/g) || []).length; };
+    var a = dec([0x5A]), w = dec([0x5A, 0x48]);
+    return score(w) > score(a) ? w : a;
   }
 
   /** Filter state: which loopholes are still open. */

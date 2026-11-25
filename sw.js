@@ -1,7 +1,18 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — offline cache.
  * After the first visit (over https), the whole app — including audio — works with no network.
  * Bump VERSION whenever any file changes so phones pick up the new copy. */
-var VERSION = 'legacy-v3.7';
+var VERSION = 'legacy-v3.29';
 var FILES = [
   './',
   'index.html',
@@ -20,6 +31,8 @@ var FILES = [
   'js/sfx.js',
   'js/bot.js',
   'js/props.js',
+  'js/vault.js',
+  'js/autofill.js',
   'js/replay.js',
   'js/screens.js',
   'js/mix.js',
@@ -66,11 +79,28 @@ var FILES = [
   'audio/song/upd3.m4a',
   'audio/mix-shutdown.m4a',
   'audio/mix-update.m4a',
-  'audio/finale-home.m4a'
+  'audio/finale-home.m4a',
+  'audio/night/sleep-loop.m4a',
+  'audio/night/song.m4a',
+  'audio/sleep/s00.m4a',
+  'audio/sleep/s01.m4a',
+  'audio/sleep/s02.m4a',
+  'audio/sleep/s03.m4a',
+  'audio/sleep/s04.m4a',
+  'audio/sleep/s05.m4a',
+  'audio/sleep/s06.m4a',
+  'audio/sleep/s07.m4a',
+  'audio/sleep/s08.m4a',
+  'audio/sleep/s09.m4a',
+  'audio/sleep/s10.m4a',
+  'audio/sleep/s11.m4a',
+  'audio/sleep/s12.m4a',
+  'audio/sleep/s13.m4a'
 ];
 
 self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
+  // cache: 'reload' skips the browser's HTTP cache, so a new VERSION really gets the new files.
+  e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(FILES.map(function (f) { return new Request(f, { cache: 'reload' }); })); }).then(function () { return self.skipWaiting(); }));
 });
 
 self.addEventListener('activate', function (e) {

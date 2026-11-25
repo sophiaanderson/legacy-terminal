@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — finale call charts (pure, no DOM, no audio).
  * Built identically from (round, seed) on any device, so the stage and a future controller agree.
  *
@@ -24,6 +35,13 @@
     { id: 'r5', word: 'HOME', target: 24, slack: 8, tempo: 'boss', fakes: 0.22, sizes: true, hide: 9 }
   ];
   var FINAL_WORD = 'NO';
+  // Holds come in rhythmic phrases, not coin flips (false = tap, true = HOLD). A HOLD takes a whole bar (js/stage.js),
+  // so these read as "ta · TAAA · · · ta · ta" against the music. Every pattern starts tap, HOLD (to teach it).
+  var SIZE_PATTERNS = {
+    r2: [false, true, false, false],
+    r4: [false, true, false, false, false, true],                 // sleepy: long gaps, then a long one
+    r5: [false, true, false, true, false, false, true, true]       // driving: the HOLD, HOLD ending lands on the bar
+  };
 
   function round(id) { for (var i = 0; i < ROUNDS.length; i++) if (ROUNDS[i].id === id) return ROUNDS[i]; return null; }
   function targetTotal() { return ROUNDS.reduce(function (a, r) { return a + r.target; }, 0); }
@@ -75,7 +93,7 @@
       if (r.fakes && i > 1 && rand() < r.fakes) out.push({ move: null, real: false, fake: fakeNames[Math.floor(rand() * fakeNames.length)], big: null, whisper: false, silent: false, player: player });
       if (r.pass && i > 0 && i % 6 === 0) { player = 1 - player; out.push({ move: 'PASS', real: false, fake: null, big: null, whisper: false, silent: false, player: player }); }
       var big = null;
-      if (r.sizes) big = i === 0 ? false : i === 1 ? true : rand() < 0.5;
+      if (r.sizes) { var pat = SIZE_PATTERNS[r.id] || [false, true]; big = pat[i % pat.length]; }
       realCount++;
       out.push({ move: move, real: true, fake: null, big: big, whisper: !!r.whisper, silent: !!(r.silentEvery && realCount % r.silentEvery === 0), player: player });
       // HIDE IT (LEGACY's move: phone face down, out of SENTINEL's sight). Not Morse, so the words are untouched.
@@ -106,7 +124,7 @@
   }
 
   L.sequence = {
-    MORSE: MORSE, ROUNDS: ROUNDS, FINAL_WORD: FINAL_WORD,
+    MORSE: MORSE, ROUNDS: ROUNDS, FINAL_WORD: FINAL_WORD, SIZE_PATTERNS: SIZE_PATTERNS,
     round: round, targetTotal: targetTotal, rng: rng, hashStr: hashStr,
     wordToMoves: wordToMoves, decode: decode, chart: chart,
     inWindow: inWindow, windowFor: windowFor, fitOffset: fitOffset

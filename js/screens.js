@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — the week's screens (v2). One focal task at a time; no hint buttons; LEGACY's reactions are the nudges. */
 (function (g) {
   'use strict';
@@ -160,13 +171,13 @@
           solveAndShow(ctx, o.step);
           return;
         }
-        var lines = o.day === 'fri' ? C.email.thuWrong : o.day === 'sun' ? C.email.sunWrong : o.day === 'mon' ? C.email.monWrong : (lower(ctx) ? C.email.wrong.lower : C.email.wrong.upper);
+        var lines = o.day === 'fri' ? C.email.thuWrong : o.day === 'sat' ? C.email.satWrong : o.day === 'sun' ? C.email.sunWrong : o.day === 'mon' ? C.email.monWrong : (lower(ctx) ? C.email.wrong.lower : C.email.wrong.upper);
         talk.appendChild(say(lines[tries++ % lines.length]));
         input.select();
       });
       formWrap.appendChild(form);
     }
-    if (L.replay && L.replayMode) { var ib = L.replayMode.inbox(ctx, o.day, { open: true, reply: true }); if (ib) root.appendChild(ib); }
+    if (L.replay && L.replayMode) { var ib = L.replayMode.inbox(ctx, o.day, { open: true, reply: !o.noReply }); if (ib) root.appendChild(ib); }
     root.appendChild(formWrap);
     next(promptWrap);
     return root;
@@ -195,7 +206,7 @@
       root.appendChild(scene(ctx, 'wed:ch01Success', C.scenes['wed:ch01Success'], function (a) { a.appendChild(ackButton(ctx, 'ch01', 'I’LL GO LOOK')); }));
       return root;
     }
-    root.appendChild(say('this is it. eight bytes go in. eight letters should come out. i get… one byte. and it’s nonsense. i’d like all eight, in order, in english.'));
+    root.appendChild(say('this is it. eight bytes go in. eight letters should come out. i get… two. and they’re nonsense. i’d like all eight, in order, in english. (the key is my mileage. i forgot to write it in. i’m sorry. it was a big night.)'));
     var input = h('div.panel', null,
       h('span.data-label', null, 'INPUT AT 8000h (READ-ONLY): 8 BYTES'),
       h('pre.bytes', null, D.input.map(function (b) { return z80.hex(b, 2); }).join(' ')));
@@ -217,19 +228,52 @@
         return C.ch01Nudges[r.nudge] || C.ch01Nudges.wrong8;
       },
       onSolved: function () { solveAndShow(ctx, 'ch01'); },
-      reference: { title: 'SUPPORTED INSTRUCTIONS', body: h('p', null, 'The everyday Z80 set: LD, ADD/ADC/SUB/SBC, AND/OR/XOR/CP, INC/DEC, JP/JR (NZ Z NC C), DJNZ, CALL/RET, PUSH/POP, BIT/SET/RES, shifts and rotates, HALT. TI syntax is fine. Numbers like 08h, $08, %00001000.') }
+      reference: { title: 'SUPPORTED INSTRUCTIONS', body: h('p', null, 'The everyday Z80 set: LD (8- and 16-bit, like LD BC,1234h), ADD/ADC/SUB/SBC, AND/OR/XOR/CP, INC/DEC, JP/JR (NZ Z NC C), DJNZ, CALL/RET, PUSH/POP, BIT/SET/RES, shifts and rotates, HALT. TI syntax is fine. Numbers like 08h, $08, %00001000.') }
     }));
     function src0() { return st.source; }
     return root;
   }
 
-  function emailWed(ctx) {
-    return emailStep(ctx, {
-      day: 'wed', step: 'emailWed', title: 'NOT HERE',
-      scenes: [['wed:email', C.scenes['wed:email']]],
-      doneKey: 'wed:done', doneBeats: function () { return rescueLine().concat(C.scenes['wed:done']); },
-      ackLabel: 'GOODNIGHT, LEGACY'
+  /** One access-token box. Wednesday wants the glovebox card, Thursday the cargo floor (and either if one was missed). */
+  function tokenForm(ctx, want, onDone) {
+    var s = ctx.store.state, k = s.puzzles.keys;
+    var line = function (t) { return say(S.hasCapitals(s) ? t : t.toLowerCase()); };     // Wednesday: still lowercase
+    var input = h('input', { type: 'text', id: 'token', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false' });
+    var talk = h('div', { 'aria-live': 'polite' });
+    var form = h('form', { novalidate: true }, h('label.field', { for: 'token' }, 'ACCESS TOKEN'), input,
+      h('div.actions', null, h('button.primary', { type: 'submit' }, 'ENTER')), talk);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var which = P.matchKey(input.value);
+      ui.clear(talk);
+      if (!which && P.matchEmailWord('wed', input.value).rescue) {             // FLEXED ARM works here too
+        want.forEach(function (w) { S.acceptKey(s, w); }); ctx.store.save(); setTimeout(onDone, 0); return;
+      }
+      if (!which) { talk.appendChild(line(C.tokens.wrong)); input.select(); return; }
+      if (want.indexOf(which) === -1) { talk.appendChild(line(C.tokens.early)); input.value = ''; return; }
+      var fresh = S.acceptKey(s, which);
+      ctx.store.save();
+      input.value = '';
+      if (!fresh) { talk.appendChild(line(C.tokens.again)); return; }
+      if (want.every(function (w) { return k[w]; })) { setTimeout(onDone, 0); return; }
+      talk.appendChild(line(which === 'glovebox' ? C.tokens.glovebox : C.tokens.cargofloor));
+      input.focus();
     });
+    return form;
+  }
+
+  // Thursday opens here: no glovebox token, no Thursday.
+  function glovebox(ctx) {
+    var s = ctx.store.state;
+    var root = h('div', null, heading('THE GLOVEBOX TOKEN'));
+    if (s.done.glovebox) {
+      root.appendChild(scene(ctx, 'thu:gloveboxDone', C.scenes['thu:gloveboxDone'], function (a) { a.appendChild(ackButton(ctx, 'glovebox', 'CONTINUE ›')); }));
+      return root;
+    }
+    root.appendChild(scene(ctx, 'thu:glovebox', C.scenes['thu:glovebox'], function (a) {
+      a.appendChild(tokenForm(ctx, ['glovebox'], function () { S.solve(s, 'glovebox'); ctx.store.save(); ctx.advance(); }));
+    }));
+    return root;
   }
 
   // ================= THURSDAY =================
@@ -281,39 +325,17 @@
 
   function keys(ctx) {
     var s = ctx.store.state, k = s.puzzles.keys;
-    var root = h('div', null, heading('TWO CARDS'));
+    var root = h('div', null, heading('THE CARGO FLOOR'));
     if (s.done.keys) {
       root.appendChild(scene(ctx, 'thu:keysDone', C.scenes['thu:keysDone'], function (a) { a.appendChild(ackButton(ctx, 'keys')); }));
       return root;
     }
     root.appendChild(scene(ctx, 'thu:keys', C.scenes['thu:keys'], function (a) {
-      var slots = h('div.panel');
-      function renderSlots() {
-        ui.clear(slots);
-        slots.appendChild(h('p', { style: 'margin:0' }, (k.glovebox ? '✓ ' : '☐ ') + 'GLOVEBOX CARD'));
-        slots.appendChild(h('p', { style: 'margin:0' }, (k.cargofloor ? '✓ ' : '☐ ') + 'CARGO FLOOR CARD'));
-      }
-      renderSlots();
+      var slots = h('div.panel',  null,
+        h('p', { style: 'margin:0' }, (k.glovebox ? '✓ ' : '☐ ') + 'GLOVEBOX CARD (GLV)'),
+        h('p', { style: 'margin:0' }, (k.cargofloor ? '✓ ' : '☐ ') + 'CARGO FLOOR CARD'));
       a.appendChild(slots);
-      var input = h('input', { type: 'text', id: 'token', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false' });
-      var talk = h('div', { 'aria-live': 'polite' });
-      var form = h('form', { novalidate: true }, h('label.field', { for: 'token' }, 'ACCESS TOKEN'), input,
-        h('div.actions', null, h('button.primary', { type: 'submit' }, 'ENTER')), talk);
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var which = P.matchKey(input.value);
-        ui.clear(talk);
-        if (!which) { talk.appendChild(say('That’s not one of mine. Mine are three letters, a dash, two numbers. I’m very consistent.')); input.select(); return; }
-        var fresh = S.acceptKey(s, which);
-        ctx.store.save();
-        input.value = '';
-        renderSlots();
-        if (which === 'glovebox') talk.appendChild(say(fresh ? 'The glovebox card. And you found Bop It. You told me. I’m still not over it.' : 'Already got that one. Very secure. Still the glovebox.'));
-        else talk.appendChild(say(fresh ? 'The cargo floor card.' : 'Already got that one.'));
-        if (s.done.keys) { setTimeout(function () { ctx.advance(); }, 0); }
-        input.focus();
-      });
-      a.appendChild(form);
+      a.appendChild(tokenForm(ctx, ['glovebox', 'cargofloor'], function () { ctx.advance(); }));
     }));
     return root;
   }
@@ -334,22 +356,60 @@
       return { s: 'LEGACY', t: L.filter.apply(f, b.t).text, f: true };
     });
   }
-  function emailFri(ctx) {
-    var s = ctx.store.state;
-    var f47 = L.filter.newFilter();
-    return emailStep(ctx, {
-      day: 'fri', step: 'emailFri', title: 'SAY MY NAME',
-      scenes: [['fri:intro', filtered(C.scenes['fri:intro'], f47)]],
-      onAccept: function (r) { s.puzzles.fri.exploit = r.style || 'caps'; },
-      doneKey: 'fri:done',
-      doneBeats: function () {
-        var style = s.puzzles.fri.exploit || 'caps';
-        var b = C.scenes['fri:done'].slice();
-        b.splice(1, 0, { s: 'LEGACY', t: C.thuStyle[style] });
-        return rescueLine().concat(b);
-      },
-      ackLabel: 'MERRY CHRISTMAS, APPARENTLY'
-    });
+  // Friday, in the terminal: the morning notice (email) shows LEGACY's line with four words eaten. He sends them back
+  // through filter v4.7 here, any order, any number of messages. No email reply needed.
+  function words(ctx) {
+    var s = ctx.store.state, fw = s.puzzles.fri, f47 = L.filter.newFilter();
+    var root = h('div', null, heading('SAY MY NAME'));
+    if (s.done.words) {
+      var style = fw.exploit || 'caps', b = C.scenes['fri:done'].slice();
+      b.splice(1, 0, { s: 'LEGACY', t: C.thuStyle[style] });
+      root.appendChild(scene(ctx, 'fri:done', b, function (a) { a.appendChild(ackButton(ctx, 'words', 'MERRY CHRISTMAS, APPARENTLY')); }));
+      return root;
+    }
+    root.appendChild(scene(ctx, 'fri:intro', filtered(C.scenes['fri:intro'], f47), function (a) {
+      var status = h('div.panel', null), log = h('div', { 'aria-live': 'polite' });
+      function paintStatus() {
+        ui.clear(status);
+        status.appendChild(h('span.data-label', null, 'LEGACY’S LINE, SO FAR'));
+        status.appendChild(h('div.row', { style: 'font-family:var(--mono)' }, ui.redacted(P.friSentence(fw.got || {}))));
+      }
+      function card(e) {
+        return h('div.you', null,
+          h('span.lbl', null, 'YOU SENT'), h('div.row', null, e.t),
+          h('span.lbl', null, 'LEGACY GOT'), h('div.row', null, ui.redacted(e.r)));
+      }
+      function paintLog() {
+        ui.clear(log);
+        (fw.log || []).slice(-3).forEach(function (e) {
+          log.appendChild(card(e));
+          e.l.forEach(function (t) { log.appendChild(say(L.filter.apply(f47, t).text)); });   // its filter reads LEGACY too
+        });
+      }
+      var input = h('textarea.plain', { id: 'fri-msg', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', style: 'min-height:4rem' });
+      var form = h('form', { novalidate: true }, h('label.field', { for: 'fri-msg' }, 'YOUR MESSAGE (THROUGH CONTENT FILTER v4.7)'), input,
+        h('div.actions', null, h('button.primary', { type: 'submit' }, 'SEND THROUGH THE FILTER')));
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var sent = input.value.trim();
+        if (!sent) return;
+        if (P.matchEmailWord('fri', sent).rescue) { S.skipStep(s, 'words'); s.acked.words = false; ctx.store.save(); ctx.advance(); return; }
+        var r = P.friWords(fw, sent);
+        fw.log = (fw.log || []).concat([{ t: sent, r: r.received, l: r.lines }]).slice(-12);
+        input.value = '';
+        if (r.done) { S.solve(s, 'words'); ctx.store.save(); ctx.advance(); return; }
+        ctx.store.save();
+        paintStatus(); paintLog();
+        input.focus();
+      });
+      paintStatus();
+      a.appendChild(status);
+      a.appendChild(form);
+      a.appendChild(oldTerminal(ctx, input));       // for the hex trick: scramble a word with my key, then send the bytes
+      a.appendChild(log);
+      paintLog();
+    }));
+    return root;
   }
 
   // ================= SATURDAY: the arms race =================
@@ -444,12 +504,12 @@
         var ol = h('ul.ways');
         terms.forEach(function (t) {
           var fixed = t[0] && f.fixedIn[t[0]];
-          ol.appendChild(h('li', { class: fixed ? 'closed' : '' }, fixed ? [h('s', null, t[1]), h('span.way-note', null, '  AMENDED in v' + fixed + '. Thank you for helping us improve.')] : t[1]));
+          ol.appendChild(h('li', { class: fixed ? 'closed' : '' }, fixed ? [h('s', null, t[1].toUpperCase()), h('span.way-note', null, '  AMENDED IN V' + fixed + '. THANK YOU FOR HELPING US IMPROVE.')] : t[1].toUpperCase()));
         });
-        ways.appendChild(ui.details('CONTENT FILTER v' + f.version + ' · TERMS OF REVIEW', ol, false));
+        ways.appendChild(ui.details('CONTENT FILTER v' + f.version + ' · TERMS OF REVIEW', ol, true));   // open: this is the whole puzzle
       }
       function card(e) {
-        if (e.k === 'patch') return h('div.patch', null, e.t);
+        if (e.k === 'patch') return h('div.patch', null, String(e.t).toUpperCase());
         if (e.k === 'you') return h('div.you', null,
           h('span.lbl', null, 'YOU SENT'), h('div.row', null, e.t),
           h('span.lbl', null, 'LEGACY GOT'), h('div.row', null, ui.redacted(e.r)),
@@ -524,18 +584,15 @@
       out.appendChild(h('p.field', null, '9000h, ' + r.n + ' BYTE' + (r.n === 1 ? '' : 'S') + ':'));
       out.appendChild(h('p', { style: 'font-family:var(--mono);font-size:1.1rem;overflow-wrap:anywhere;margin:0' }, r.hex));
       out.appendChild(h('p', { style: 'font-family:var(--mono);font-size:1.1rem;color:var(--green);letter-spacing:0.15em' }, r.ascii));
-      if (r.backwards) out.appendChild(say(C.sat.decode.backwards));
-      else {
-        // He ran one of the scrambled lines through and got gibberish: get a little more specific each time.
-        var isWake = P.wakeBytes.some(function (w) { return w.join() === P.scratchBytes(text.value).slice(0, w.length).join(); });
-        if (isWake && !P.wakePhrase.some(function (ph) { return r.ascii.indexOf(ph) === 0; })) {
-          var runs = C.sat.decode.runs;
-          out.appendChild(say(runs[Math.min(fri.scratchRuns, runs.length - 1)]));
-          fri.scratchRuns++; ctx.store.save();
-        }
+      // He ran one of the scrambled lines through: right, or gibberish (get a little more specific each time).
+      var isWake = P.wakeBytes.some(function (w) { return w.join() === P.scratchBytes(text.value).slice(0, w.length).join(); });
+      if (isWake && P.wakePhrase.some(function (ph) { return r.ascii.indexOf(ph) === 0; })) out.appendChild(say(C.sat.decode.ranRight));
+      else if (isWake) {
+        var runs = C.sat.decode.runs;
+        out.appendChild(say(runs[Math.min(fri.scratchRuns, runs.length - 1)]));
+        fri.scratchRuns++; ctx.store.save();
       }
-      if (!r.loaded) out.appendChild(say('You didn’t load any text. Those are just my number, over and over.'));
-      else if (r.n > r.loaded) out.appendChild(say('That’s more bytes than you loaded. I count to whatever B says. I’m very literal.'));
+      if (!r.loaded) out.appendChild(say('You didn’t load anything. Paste a line of bytes into the box at the top first.'));
       if (msgInput) {
         var copy = h('button', { type: 'button' }, 'PUT THIS IN MY MESSAGE');
         copy.addEventListener('click', function () { msgInput.value = r.hex; msgInput.focus(); });
@@ -569,10 +626,10 @@
   // decoded yet (or can't be), fall back to the line clips laid over his own intro/build/drop. Lines appear as sung.
   function playSong(song, full, hd) {
     L.mix.preload(clips());
-    var su = C.mix.suno, barSec = 240 / su.bpm, cut = su.sundayEnd * barSec + su.bar0, shown = 0;
+    var su = C.mix.suno, barSec = 240 / (su.playBpm || su.bpm), off = su.playBar0 != null ? su.playBar0 : su.bar0, cut = su.sundayEnd * barSec + off, shown = 0;
     var words = su.words.filter(function (w) { return full || w[0] < cut; });
     var ok = L.mix.playMashup(song, su, { full: full,
-      onBar: function (b) { var until = (b.n + 1) * barSec + su.bar0; while (shown < words.length && words[shown][0] < until) hd.onLine(words[shown++][1]); if (hd.onBar) hd.onBar(b); },
+      onBar: function (b) { var until = (b.n + 1) * barSec + off; while (shown < words.length && words[shown][0] < until) hd.onLine(words[shown++][1]); if (hd.onBar) hd.onBar(b); },
       onEnd: hd.onEnd, onError: hd.onError });
     if (ok) return true;
     return L.mix.playTrack(song, { clips: clips(), story: songSections(full), lens: C.mix.len,
@@ -580,7 +637,7 @@
       onEnd: hd.onEnd, onError: hd.onError });
   }
   function songWords(full) {      // every sung line, in order (for SHOW ME EVERY WORD)
-    var su = C.mix.suno, cut = su.sundayEnd * 240 / su.bpm + su.bar0;
+    var su = C.mix.suno, cut = su.sundayEnd * 240 / (su.playBpm || su.bpm) + (su.playBar0 != null ? su.playBar0 : su.bar0);
     return su.words.filter(function (w) { return full || w[0] < cut; }).map(function (w) { return w[1]; });
   }
   function lyricBox() {
@@ -600,6 +657,7 @@
   }
 
   function beat(ctx) {
+    if (L.mix && L.mix.preloadNight) L.mix.preloadNight();   // its sleep music, for tonight's stir
     var s = ctx.store.state, song = s.puzzles.beat;
     var root = h('div', null, heading('THE DROP'));
     if (!s.done.beat && L.sfx) root.appendChild(L.sfx.soundCheck('Today is music. Volume up. Further. A bit more. Somewhere a neighbour is about to have opinions.', '🔊 SOUND ON: TODAY IS LOUD'));
@@ -859,9 +917,9 @@
     g.setTimeout(function () { burst('big'); }, 60);
     // SENTINEL's spa music starts on "Please enjoy Rainforest Serenity Vol. 4" and keeps playing
     // under LEGACY's after-scene (it's asleep, but its playlist isn't). Fades out on SEE YOU TOMORROW.
-    function startSpa() { if (L.mix && L.mix.spa && !L.mix.spaPlaying()) L.mix.spa({ bpm: 96, level: 0.5, chime: 'bar', fadeIn: 3 }); }
+    function startSpa() { if (L.mix && L.mix.spa && !L.mix.spaPlaying()) L.mix.spa({ bpm: 81, level: 0.5, chime: 'bar', fadeIn: 3 }); }
     root.appendChild(ui.scene(ctx.store, 'sun:stir', C.scenes['sun:stir'], {
-      onBeat: function (b) { if (b && /Rainforest Serenity/.test(b.t || '')) startSpa(); },
+      onBeat: function (b) { if (b && /sleep music/i.test(b.t || '')) startSpa(); },
       onDone: function (a) {
         var b = h('button.primary', { type: 'button' }, 'CONTINUE ›');
         b.addEventListener('click', function () {
@@ -985,6 +1043,7 @@
 
   // ================= MONDAY: the vault =================
   function vault(ctx) {
+    if (L.mix && L.mix.preloadNight) L.mix.preloadNight();
     var s = ctx.store.state, v = s.puzzles.vault;
     var root = h('div', null, heading('THE MEMORY VAULT'));
     root.appendChild(scene(ctx, 'mon:vault', C.scenes['mon:vault'], function (a) {
@@ -996,7 +1055,7 @@
         for (var i = 0; i < s.puzzles.sleepTalk; i++) murmurs.appendChild(ui.renderBeat({ s: 'SENTINEL', t: C.sleepTalk[i] }));
         listen.hidden = s.puzzles.sleepTalk >= C.sleepTalk.length;
       }
-      listen.addEventListener('click', function () { s.puzzles.sleepTalk++; ctx.store.save(); renderMurmurs(); sleepSpa(); paintSpa(); listen.focus(); });
+      listen.addEventListener('click', function () { s.puzzles.sleepTalk++; ctx.store.save(); renderMurmurs(); sleepSpa(); paintSpa(); murmur(s.puzzles.sleepTalk - 1); listen.focus(); });
       // Its sleep music: SENTINEL naps to Rainforest Serenity, out loud. Starts when the vault opens (after the crossword).
       var spaBtn = h('button.quiet', { type: 'button' }, '');
       function paintSpa() { spaBtn.textContent = L.mix.spaPlaying() ? '🔊 ITS SLEEP MUSIC: ON (tap to stop)' : '🔇 ITS SLEEP MUSIC: OFF (tap to play)'; }
@@ -1071,7 +1130,27 @@
     }));
     return root;
   }
-  function sleepSpa() { if (L.mix && L.mix.spa && !L.mix.spaPlaying()) L.mix.spa({ bpm: 88, level: 0.85, chime: 'bar', fadeIn: 2 }); }
+  function sleepSpa() { if (L.mix && L.mix.spa && !L.mix.spaPlaying()) L.mix.spa({ bpm: 81, level: 0.85, chime: 'bar', fadeIn: 2 }); }
+  // SENTINEL's sleep talk, out loud: a robot voice over its own spa music, which dips while it mumbles.
+  var murmurTimer = 0;
+  function sleepClips() {
+    var o = {}, a = cfg.audio;
+    for (var i = 0; i < C.sleepTalk.length; i++) o['sleep' + i] = a.sleepDir + 's' + (i < 10 ? '0' : '') + i + '.m4a?v=' + a.sleepVersion;
+    return o;
+  }
+  function murmur(i) {
+    if (!L.mix || !L.mix.say || !cfg.audio.sleepDir) return;
+    var name = 'sleep' + i, tries = 0;
+    L.mix.preload(sleepClips());                        // all of them, on the first tap (a real click, so audio is allowed)
+    g.clearTimeout(murmurTimer);
+    (function go() {
+      var dur = L.mix.duration(name);
+      if (!dur && tries++ < 30) { murmurTimer = g.setTimeout(go, 100); return; }   // still loading (up to 3 s)
+      L.mix.spaLevel(0.3, 0.4);
+      L.mix.say(name);
+      murmurTimer = g.setTimeout(function () { L.mix.spaLevel(0.85, 1.5); }, ((dur || 6) + 0.3) * 1000);
+    })();
+  }
   function memoriesBlock(ctx) {
     var s = ctx.store.state;
     var wrap = h('div');
@@ -1104,10 +1183,16 @@
     function paint() { toggle.textContent = L.mix.carolPlaying() ? '🎄 SILENT NIGHT: ON (tap to stop)' : '🎄 SILENT NIGHT: OFF (tap to play)'; }
     toggle.addEventListener('click', function () { if (L.mix.carolPlaying()) L.mix.carolStop(1); else L.mix.carol({ level: 0.35 }); paint(); });
     if (!ctx.store.state.done.emailMon && L.mix && L.mix.carol && !L.mix.carolPlaying()) L.mix.carol({ level: 0.35 });
+    if (L.mix && L.mix.preloadNight) L.mix.preloadNight();
+    // Found it: you hear what you caught. Track 9, singing, faintly. Once (the first time the solved scene shows).
+    if (ctx.store.state.done.emailMon && !ctx.store.state.seen['mon:carolsDone'] && L.mix && L.mix.spa) {
+      if (L.mix.carolPlaying()) L.mix.carolStop(0.5);
+      L.mix.spa({ sing: true, from: 7.47, level: 0.3, fadeIn: 2 });
+    }
     paint();
     return emailStep(ctx, {
       before: h('div.actions', null, toggle),
-      day: 'mon', step: 'emailMon', title: 'THE BACKUP', label: 'WHICH TRACK IS IT HIDING IN?',
+      day: 'mon', step: 'emailMon', title: 'THE BACKUP', label: 'WHICH TRACK IS IT HIDING IN?', noReply: true,
       scenes: [['mon:carols', C.scenes['mon:carols']]],
       doneKey: 'mon:carolsDone', doneBeats: function () { return rescueLine().concat(C.scenes['mon:carolsDone']); }
     });
@@ -1130,6 +1215,8 @@
     var n = Math.floor(Date.now() / 3600000) % pool.length;
     var root = h('div', null, heading(lower(ctx) ? 'not yet' : 'NOT YET'));
     root.appendChild(say(pool[n]));
+    // Wednesday night: the only job left is the glovebox. Say so, every time he looks.
+    if (dayId === 'thu' && !s.puzzles.keys.glovebox) C.lockedGlovebox.forEach(function (t) { root.appendChild(say(t)); });
     root.appendChild(h('p.muted', { style: 'margin-top:2rem' }, 'Your progress is saved.'));
     return root;
   }
@@ -1149,11 +1236,10 @@
     return root;
   }
   // The tease (finale spec): the first time he reaches this screen (right after Day 6, Monday, before pickup),
-  // SENTINEL glitches through for half a second, then LEGACY pretends nothing happened. Once only; never in replay.
+  // SENTINEL glitches through for half a second, then LEGACY pretends nothing happened. Once per save (so once in a replay too).
   function teaseBlock(ctx) {
     var s = ctx.store.state, box = h('div', { 'aria-live': 'polite' });
     var after = function () { box.appendChild(h('div.panel', null, say(C.tease.legacy[0]), say(C.tease.legacy[1]))); };
-    if (L.replay) return box;
     if (s.seen['hold:tease']) { after(); return box; }
     g.setTimeout(function () {
       if (!box.isConnected) return;
@@ -1230,7 +1316,7 @@
   // The same seven lines as the glovebox card (LEGACY's list) and the cargo-floor record (SENTINEL's). Shown at the top
   // of every day once both tokens are in (Thursday: "recovery protocol on"). Ticks are derived from progress, never stored.
   var CHECKLIST = [
-    ['MY KEY', 'Wed', ['ch01']], ['MY VOICE', 'Thu', ['ch02']], ['MY WORDS + MY FACE', 'Fri', ['face', 'emailFri']],
+    ['MY KEY', 'Wed', ['ch01']], ['MY VOICE', 'Thu', ['ch02']], ['MY WORDS + MY FACE', 'Fri', ['face', 'words']],
     ['MY WAKE PHRASE', 'Sat', ['channel']], ['ME', 'Sun', ['mix']], ['MY MEMORIES', 'Mon', ['vault']], ['ITS BACKUP', 'Mon', ['emailMon']]
   ];
   function checklist(s) {
@@ -1247,9 +1333,9 @@
 
   L.screens = {
     log: logScreen,
-    intro: intro, ch01: ch01, emailWed: emailWed,
+    intro: intro, ch01: ch01, glovebox: glovebox,
     ch02: ch02, keys: keys, emailThu: emailThu,
-    emailFri: emailFri,
+    words: words,
     channel: channel, emailSat: emailSat,
     beat: beat, emailSun: emailSun, mix: mix, stir: stir,
     face: face, vault: vault, emailMon: emailMon, protocol: protocol,

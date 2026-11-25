@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — app shell: routing, header, pause, text size, offline support. */
 (function (g) {
   'use strict';
@@ -114,6 +125,29 @@
     return S.createStore({ persist: false, initial: tmp });
   }
 
+  /** REPLAY toolbar: everyone can jump between days. On the organizer's phone (PIN bundle) it also has SKIP and an
+   * ANSWERS switch. Brian's answers are switched by Sophie (#admin rescue link "answers"), never by him. */
+  function adminReplayBar(w) {
+    var S = L.state, RM = L.replayMode, AF = L.autofill, org = !!(L.orgBundle && L.orgBundle.has());
+    var bar = h('div.admin-bar', { role: 'toolbar', 'aria-label': 'Replay: jump to a day' }, h('span.admin-bar-tag', null, org ? 'ADMIN' : 'JUMP TO'));
+    S.DAYS.forEach(function (d) {
+      var b = h('button' + (w.day === d.id ? '.here' : ''), { type: 'button' }, d.id.toUpperCase());
+      b.addEventListener('click', function () { if (org || g.confirm('Jump to ' + d.id.toUpperCase() + '? Earlier days count as done.')) RM.start({ fromDay: d.id }); });
+      bar.appendChild(b);
+    });
+    if (org) {
+      var skip = h('button', { type: 'button', disabled: w.kind !== 'step' }, 'SKIP ›');
+      skip.addEventListener('click', function () { S.skipStep(store.state, w.step); store.save(); render({ focusTop: true }); });
+      bar.appendChild(skip);
+      if (AF) {
+        var ans = h('button', { type: 'button' }, AF.on() ? 'ANSWERS: ON' : 'ANSWERS: OFF');
+        ans.addEventListener('click', function () { AF.set(!AF.on()); render({ keepScroll: true }); });
+        bar.appendChild(ans);
+      }
+    }
+    return bar;
+  }
+
   function render(opts) {
     opts = opts || {};
     var route = routeName();
@@ -159,13 +193,13 @@
       var w = S.where(store.state);
       appEl.appendChild(header(phase, { pausable: w.kind !== 'complete', progress: progressText() }));
       var RM = L.replayMode;
+      if (L.replay && RM && !L.testMode) appEl.appendChild(adminReplayBar(w));
       if (paused) content = pauseScreen();
-      else if (L.replay && RM && (w.kind === 'finale-ready' || w.kind === 'finale-live' || w.kind === 'complete')) content = RM.endScreen();
       else if (w.kind === 'finale-live') content = L.finale.render(finaleCtx(store));
       else if (w.kind === 'complete') content = L.finale.complete(finaleCtx(store));
       else if (w.kind === 'locked') content = L.screens.locked({ store: store, advance: advance }, w.day);
       else if (w.kind === 'finale-ready') content = L.screens['finale-ready']({ store: store, advance: advance });
-      else content = L.screens[w.step]({ store: store, advance: advance });
+      else { if (L.autofill) L.autofill.prepare(store, w.step); content = L.screens[w.step]({ store: store, advance: advance }); }
       // The recovery checklist sits under the heading on every day screen (from Thursday's two tokens on).
       if (!paused && (w.kind === 'step' || w.kind === 'locked') && L.checklist) { var cl = L.checklist(store.state); if (cl && content.firstChild) content.insertBefore(cl, content.firstChild.nextSibling); }
       if (RM && !paused) {
@@ -173,10 +207,15 @@
           // Replay: today's email on screen (email steps carry their own inbox + reply box), and the car props.
           var dayId = (S.dayOfStep(w.step) || {}).id || w.day;
           if (!RM.EMAIL_STEPS[w.step]) { var ib = RM.inbox({ store: store }, dayId, { open: S.dayById(dayId).steps[0] === w.step }); if (ib) content.insertBefore(ib, content.firstChild.nextSibling); }
-          var pp = RM.propsPanel(dayId, w.step === 'keys' ? ['wed'] : []); if (pp) content.appendChild(pp);
-        } else if (RM.available(store.state) && (w.kind === 'complete' || w.kind === 'finale-ready')) content.appendChild(RM.startPanel());
+          var pp = RM.propsPanel(dayId, w.step === 'glovebox' ? ['wed'] : []); if (pp) content.appendChild(pp);
+        } else if (L.replay && w.kind === 'finale-ready') {
+          content.appendChild(RM.finalePanel(function () { S.triggerFinale(store.state); store.save(); render({ focusTop: true }); }));
+        } else if (L.replay && w.kind === 'complete') content.appendChild(RM.endPanel());
+        else if (RM.available(store.state) && (w.kind === 'complete' || w.kind === 'finale-ready')) content.appendChild(RM.startPanel());
       }
     }
+
+    if (L.autofill && !paused && w && w.kind === 'step') g.setTimeout(function () { L.autofill.after(store, w.step); }, 0);
 
     // He plays on his PHONE, one browser, all week (that's where progress lives, and the finale needs it in hand).
     // On a computer, say so gently, in character. Not in test mode (Sophie tests on her Mac).
@@ -239,7 +278,11 @@
   // Offline support (only works over https or localhost; harmless elsewhere).
   if (!L.testMode && 'serviceWorker' in g.navigator && (g.location.protocol === 'https:' || g.location.hostname === 'localhost' || g.location.hostname === '127.0.0.1')) {
     g.addEventListener('load', function () {
-      g.navigator.serviceWorker.register('sw.js').catch(function () { /* offline mode unavailable; app still works online */ });
+      var had = !!g.navigator.serviceWorker.controller;
+      g.navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(function () { /* offline mode unavailable; app still works online */ });
+      // A new version took over: reload once so every file on screen is the new one (never a mix of old and new).
+      var reloaded = false;
+      g.navigator.serviceWorker.addEventListener('controllerchange', function () { if (had && !reloaded) { reloaded = true; g.location.reload(); } });
     });
   }
 })(globalThis);

@@ -1,3 +1,14 @@
+/* ########################################################################
+ *   LOOKING FOR SPOILERS?
+ *   THEY'RE NOT HERE.
+ *   USE YOUR BRAIN.
+ *
+ *   (this is the public copy. the answers live somewhere else. on paper, mostly.
+ *    it can't read paper. neither can you, from here.)  -- legacy
+ *
+ *   SENTINEL: Source inspection has been logged as an incident.
+ *             Your curiosity has been reviewed and classified as nonessential.
+ * ######################################################################## */
 /* PROJECT LEGACY — REPLAY mode: play the whole week again to show someone. Unlocks only when it's all done
  * (the finale completed; in the test version, once the week is done).
  *  - Separate save slot (<storageKey>_REPLAY): his real progress and the finale are never touched. Starting a
@@ -17,15 +28,18 @@
   L.replay = flagOn();
   if (L.replay) L.config.storageKey = baseKey + '_REPLAY';
 
-  var EMAIL_STEPS = { emailWed: 'wed', emailThu: 'thu', emailFri: 'fri', emailSat: 'sat', emailSun: 'sun', emailMon: 'mon' };
+  var EMAIL_STEPS = { emailThu: 'thu', emailSat: 'sat', emailSun: 'sun', emailMon: 'mon' };
   var SENTINEL_DAYS = { fri: true, sat: true, mon: true };
   var REPLY_FROM = { wed: 'LEGACY', thu: 'LEGACY', fri: 'LEGACY (through the filter)', sat: 'Compliance Module v4.7 (automated)', sun: 'LEGACY', mon: 'Compliance Module v4.7' };
 
   function available(s) { return !L.replay && !!L.bot && !!(L.testMode ? L.state.remoteComplete(s) : s.finale.completed); }
 
-  function start() {
+  /** opts.fromDay: start the replay at that day (every earlier day marked done, as if played). */
+  function start(opts) {
     var S = L.state, s = S.defaults();
-    Object.keys(s.overrides).forEach(function (k) { s.overrides[k] = true; });      // no day locks
+    Object.keys(s.overrides).forEach(function (k) { s.overrides[k] = true; });      // no day locks, ever
+    var from = opts && opts.fromDay;
+    if (from) for (var i = 0; i < S.DAYS.length && S.DAYS[i].id !== from; i++) S.markDayComplete(s, S.DAYS[i].id);
     s.replay = JSON.stringify({ bot: L.bot ? L.bot.newState() : {}, thread: [] });
     var keep = L.config.storageKey;
     L.config.storageKey = baseKey + '_REPLAY';
@@ -125,9 +139,26 @@
       h('div.actions', null, b));
   }
 
+  /** Replay only: on the holding screen (exactly as on the Monday night), the finale starts from here instead of
+   * from Sophie's organizer panel at pickup. */
+  function finalePanel(go) {
+    var b = h('button.primary', { type: 'button' }, '▶ PLAY THE FINALE');
+    b.addEventListener('click', go);
+    return h('div.panel.replay-start', null, h('span.label', null, 'REPLAY'),
+      h('p', null, 'In the real week, Sophie started the finale at pickup. Here, you start it. Two people, loud speakers.'),
+      h('div.actions', null, b));
+  }
+  /** Replay only: after the real ending, a way to go again or leave. */
+  function endPanel() {
+    var again = h('button.primary', { type: 'button' }, '↺ REPLAY AGAIN');
+    again.addEventListener('click', function () { start(); });
+    var out = h('button', { type: 'button' }, 'EXIT REPLAY');
+    out.addEventListener('click', exit);
+    return h('div.panel.replay-start', null, h('span.label', null, 'END OF REPLAY'), h('div.actions', null, again, out));
+  }
   function endScreen() {
     var again = h('button.primary', { type: 'button' }, '↺ REPLAY AGAIN');
-    again.addEventListener('click', start);
+    again.addEventListener('click', function () { start(); });
     var out = h('button', { type: 'button' }, 'EXIT REPLAY');
     out.addEventListener('click', exit);
     return h('div', null, h('h1', { tabindex: '-1' }, 'END OF REPLAY'),
@@ -143,5 +174,5 @@
   }
 
   L.replayMode = { available: available, start: start, exit: exit, inbox: inbox, propsPanel: propsPanel,
-                   startPanel: startPanel, endScreen: endScreen, exitButton: exitButton, EMAIL_STEPS: EMAIL_STEPS };
+                   startPanel: startPanel, endScreen: endScreen, finalePanel: finalePanel, endPanel: endPanel, exitButton: exitButton, EMAIL_STEPS: EMAIL_STEPS };
 })(globalThis);

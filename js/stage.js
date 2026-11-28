@@ -64,7 +64,7 @@
       NICK: cfg.supervisorNickname, N: s.puzzles.ch02.instructions ? String(s.puzzles.ch02.instructions) : 'very few',
       TRICK: TRICKS[s.puzzles.fri.exploit] || 'a trick', BPM: String(hisBpm(s)), MS: String(Math.round(f.offsetMs)),
       ODO: odo ? odo.toLocaleString('en-US') : '', MILES: miles ? miles.toLocaleString('en-US') : '',
-      WORDS: Q.ROUNDS.map(function (r) { return r.word; }).join(' · ') + ' · ' + Q.overrideWord()
+      WORDS: Q.ROUNDS.map(function (r) { return r.word; }).join(' · ')       // the last one is the override word
     };
     return v;
   }
@@ -156,14 +156,28 @@
     });
     var keys = { j: 'BOP', ' ': 'BOP', k: 'TWIST', l: 'PULL', J: 'BOP', K: 'TWIST', L: 'PULL' };
     function onKey(e) {
+      if (!wrap.isConnected) { destroy(); return; }       // a round that's gone never keeps the keys
+      if (!wrap.classList.contains('live')) return;        // only while a round is playing (space/Enter still work buttons otherwise)
+      var tg = e.target && e.target.tagName;
+      if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT') return;
       if (e.repeat || !keys[e.key] || !byMove[keys[e.key]]) return; e.preventDefault();
       var k = 'k' + e.key.toLowerCase(); if (live[k]) return;
       var p = live[k] = begin(keys[e.key], byMove[keys[e.key]]);
       if (e.shiftKey) finish(p, true);
     }
+    function destroy() { g.clearTimeout(cueTimer); doc.removeEventListener('keydown', onKey); doc.removeEventListener('keyup', onKeyUp); }
     function onKeyUp(e) { if (!keys[e.key]) return; var k = 'k' + e.key.toLowerCase(); release(live[k]); delete live[k]; }
     doc.addEventListener('keydown', onKey); doc.addEventListener('keyup', onKeyUp);
-    function clearCue() { Object.keys(byMove).forEach(function (m) { var b = byMove[m]; b.classList.remove('called', 'big', 'quiet', 'fake'); b.querySelector('.pad-sub').textContent = b._sub; }); }
+    // The ring closing onto the pad, landing on the beat. Driven from JS so it restarts every call, even the same
+    // pad twice in a row (iPhone Safari doesn't always restart a CSS animation when the class comes straight back).
+    function ring(b, dur) {
+      var r = b.querySelector('.pad-ring'); if (!r || !r.animate) return;
+      if (r._anim) { try { r._anim.cancel(); } catch (x) {} }
+      r._anim = r.animate([{ transform: 'scale(1.9)', opacity: 0.1 }, { transform: 'scale(1.27)', opacity: 0.9, offset: 0.7 }, { transform: 'scale(1)', opacity: 1 }],
+        { duration: Math.max(150, dur * 1000), easing: 'linear', fill: 'forwards' });
+    }
+    function unring(b) { var r = b.querySelector('.pad-ring'); if (r && r._anim) { try { r._anim.cancel(); } catch (x) {} r._anim = null; } }
+    function clearCue() { Object.keys(byMove).forEach(function (m) { var b = byMove[m]; b.classList.remove('called', 'big', 'quiet', 'fake'); unring(b); b.querySelector('.pad-sub').textContent = b._sub; }); }
     return {
       el: wrap,
       flash: function (move, ok) { var b = byMove[move]; if (!b) return; b.classList.remove('hit', 'miss'); void b.offsetWidth; b.classList.add(ok ? 'hit' : 'miss'); },
@@ -175,16 +189,19 @@
         void b.offsetWidth;
         b.classList.add('called'); if (big) b.classList.add('big'); if (quiet) b.classList.add('quiet'); if (fake) b.classList.add('fake');
         b.querySelector('.pad-sub').textContent = fake ? '' : big ? 'HOLD' : big === false ? 'tap' : '';
+        ring(b, dur);
         cueTimer = g.setTimeout(clearCue, (dur + 0.3) * 1000);
       },
       clearCue: clearCue,
       /** EVERYTHING: all three pads called at once, rings closing together. */
       cueAll: function (dur) {
         clearCue(); g.clearTimeout(cueTimer);
-        Object.keys(byMove).forEach(function (m) { var b = byMove[m]; b.style.setProperty('--approach', Math.max(0.15, dur) + 's'); void b.offsetWidth; b.classList.add('called', 'big'); b.querySelector('.pad-sub').textContent = 'ALL'; });
+        Object.keys(byMove).forEach(function (m) { var b = byMove[m]; b.style.setProperty('--approach', Math.max(0.15, dur) + 's'); void b.offsetWidth; b.classList.add('called', 'big'); b.querySelector('.pad-sub').textContent = 'ALL'; ring(b, dur); });
         cueTimer = g.setTimeout(clearCue, (dur + 0.3) * 1000);
       },
-      destroy: function () { g.clearTimeout(cueTimer); doc.removeEventListener('keydown', onKey); doc.removeEventListener('keyup', onKeyUp); }
+      /** Playing: the pads own touches (no scrolling from them). Not playing: the page scrolls normally. */
+      live: function (on) { wrap.classList.toggle('live', !!on); if (!on) clearCue(); },
+      destroy: function () { wrap.classList.remove('live'); destroy(); }
     };
   }
   var PADS3 = [{ move: 'BOP', label: 'BOP' }, { move: 'TWIST', label: 'TWIST' }, { move: 'PULL', label: 'PULL' }];
@@ -448,7 +465,7 @@
       if (i >= 0 && i < ORDER.length - 1) item('Skip to: ' + ORDER[i + 1], function () { if (Q.round(f.step)) f.score = scoreThrough(f.step); go(ORDER[i + 1]); });
       item('Jump to the two keys', function () { f.score = 90; go('keys'); });
       // Hidden easy mode: slower tempos + wider windows. Takes effect at once by restarting the current part.
-      item(f.easy ? 'EASY MODE: ON (tap for normal)' : 'EASY MODE: OFF (tap for easy)', function () { f.easy = !f.easy; ctx.store.save(); if (Q.round(f.step) || f.step === 'heartbeat') go(f.step); });
+      item(f.easy ? 'EASY MODE: ON (tap for normal)' : 'EASY MODE: OFF (tap for easy)', function () { f.easy = !f.easy; ctx.store.save(); if (Q.round(f.step)) retryOf = f.step; if (Q.round(f.step) || f.step === 'heartbeat') go(f.step); });
       item('Close', function () {});
       panel.hidden = false;
       var first = panel.querySelector('button'); if (first) first.focus();
@@ -457,6 +474,23 @@
   }
   function scoreThrough(rid) { var t = 0; for (var i = 0; i < Q.ROUNDS.length; i++) { t += Q.ROUNDS[i].target; if (Q.ROUNDS[i].id === rid) break; } return t; }
 
+  // SENTINEL falls: every word it said on this screen drops off the page, a white flash, and the colour floods back in.
+  function sentinelFalls(container) {
+    var lines = Array.prototype.slice.call(container.querySelectorAll('.line.sentinel, pre.readout'));
+    doc.body.classList.remove('boss', 'takeover');
+    burst('big'); if (L.mix.glitch) L.mix.glitch('big');
+    lines.forEach(function (el, i) {
+      if (/OVERRIDE ACCEPTED|PURGED/.test(el.textContent)) return;   // the system lines stay: that's the receipt
+      el.style.setProperty('--fall-delay', (0.15 + i * 0.09).toFixed(2) + 's');
+      el.style.setProperty('--fall-spin', ((i % 2 ? 1 : -1) * (6 + (i * 7) % 14)) + 'deg');
+      el.classList.add('falls');
+    });
+    g.setTimeout(function () {
+      doc.body.classList.remove('sn-dying');
+      doc.body.classList.add('colour-flood');
+      g.setTimeout(function () { doc.body.classList.add('restored'); }, 1600);
+    }, 1100);
+  }
   function setTakeover(on) { doc.body.classList.toggle('takeover', !!on); }
   function burst(kind) {
     var cls = kind === 'small' ? 'glitch-small' : 'glitch-burst';
@@ -466,6 +500,7 @@
   }
 
   // ---------- render ----------
+  var retryOf = null;                                    // the round being replayed after a fail (skips its intro)
   function render(ctx) {
     if (L.mix && L.mix.preloadNight) L.mix.preloadNight();   // SENTINEL's lullaby, ready for the glitch and Round 4
     stopEngine();
@@ -475,6 +510,8 @@
     ctx.setSentinel(inTakeover);
     setTakeover(inTakeover);
     if (f.step !== 'r4') doc.body.style.removeProperty('--drain');
+    doc.body.classList.remove('sn-dying', 'colour-flood');
+    doc.body.classList.toggle('restored', f.step === 'drop' || f.step === 'home');   // after SENTINEL falls, the colour stays
     doc.body.classList.toggle('stage-mode', ['heartbeat', 'r1', 'r2', 'r3', 'r4', 'r5', 'keys'].indexOf(f.step) !== -1);
 
     function go(step) { stopEngine(); f.step = step; store.save(); ctx.advance(); }
@@ -505,8 +542,9 @@
           var view = stageView(), pads = makePads([{ move: 'BOP', label: 'BOP', sub: 'on the kick' }], function (p) { if (engine && engine.input) engine.input(p); });
           var after = h('div');
           var start = button('START THE KICK', function () {
-            start.hidden = true; ui.clear(after);
+            start.hidden = true; ui.clear(after); pads.live(true);
             engine = Heartbeat({ s: s, view: view, pads: pads, done: function (fit) {
+              pads.live(false);
               if (!fit) { view.status.textContent = F3.heartbeatBad; start.hidden = false; start.textContent = 'AGAIN'; return; }
               f.offsetMs = Math.round(fit.offset * 1000); store.save();
               v = vars(s);
@@ -525,7 +563,8 @@
         root.appendChild(heading(R.title));
         var intro = rid === 'r5' ? F3.r5intro : R.intro;
         var body = h('div');
-        root.appendChild(intro.length ? scene(rid, intro, function (a) { a.appendChild(body); }) : body);
+        var again = retryOf === rid; retryOf = null;         // AGAIN: straight back into the game, no intro dialogue
+        root.appendChild(intro.length && !again ? scene(rid, intro, function (a) { a.appendChild(body); }) : body);
         playRound(rid, body);
         break;
       }
@@ -562,7 +601,8 @@
         root.appendChild(excl); root.appendChild(rest);
         var dt = [], hasAudio = !!L.mix.ctx(), song = hisSong(s); song.breath = true;
         function later(ms, fn) { dt.push(g.setTimeout(fn, ms)); }
-        engine = { stop: function () { dt.forEach(g.clearTimeout); L.mix.stop(); } };
+        var toHome = false;                                // the song carries on into "Are we home?"
+        engine = { stop: function () { dt.forEach(g.clearTimeout); if (!toHome) L.mix.stop(); } };
         if (hasAudio) L.mix.playTrack(song, { dropOnly: true, bars: 8, clips: clips() });
         var SHUT = (L.mix.duration('shutdown') || 8.8) + 0.1, UPD = (L.mix.duration('update') || 8.5) + 0.4;   // clip lengths (s), with a little air
         later(4500, function () {                           // the music cuts out: the recording, alone
@@ -578,10 +618,13 @@
               rest.appendChild(h('pre.readout', null, F3.liveHead));
               rest.appendChild(h('p.live-caps', null, drops.update || ''));
               if (hasAudio) L.mix.say('update');
-              later(UPD * 1000, function () {               // the drop comes back
-                if (hasAudio) L.mix.playTrack(song, { dropOnly: true, bars: 8, clips: clips() });
+              later(UPD * 1000, function () {               // the drop comes back, and this time it doesn't stop
+                if (hasAudio) {
+                  L.mix.playTrack(song, { dropOnly: true, bars: 128, clips: clips() });   // ~4 minutes: it plays on under the ending
+                }
+                burst('small'); doc.body.classList.add('restored');
                 rest.appendChild(h('pre.readout.big', null, tpl(F3.restore, v)));
-                rest.appendChild(scene('morse', F3.morse, function (a2) { a2.appendChild(button('CONTINUE', function () { go('home'); })); }));
+                rest.appendChild(scene('morse', F3.morse, function (a2) { a2.appendChild(button('CONTINUE', function () { toHome = true; if (L.mix.holdTrack) L.mix.holdTrack(); go('home'); })); }));
               });
             });
           });
@@ -590,12 +633,15 @@
       }
       case 'home': {
         // "Are we home?" … a pause for them to answer out loud … then his tuned face comes back, smiles, and thanks them.
-        L.mix.stop(); L.mix.preload(clips());
+        L.mix.preload(clips());                               // his song is still playing from the drop; it fades for the thanks
+        if (!L.mix.isPlaying()) { if (L.mix.ctx()) L.mix.loopBeat(function () { return hisSong(s); }, { clips: clips(), leadGain: 1.6 }); }
+        doc.body.classList.add('restored');
         root.className += ' ending';
         root.appendChild(h('h1', { tabindex: '-1', style: 'color:var(--muted)' }, 'LEGACY'));
         root.appendChild(scene('home', F3.home, function (a) {
           if (!f.completed && !ctx.preview) { f.completed = true; store.save(); }
           var ht = g.setTimeout(function () {
+            L.mix.stop();                                      // silence for his face and the last line
             var fv = faceView(s.puzzles.face);
             a.appendChild(h('div.finale-face-wrap', null, fv.el));
             fv.smile();
@@ -605,7 +651,7 @@
               a.appendChild(h('p.margin-note', null, cfg.marginNote));
             }, 1700);                                          // after the smile lands
           }, 5000);
-          engine = { stop: function () { g.clearTimeout(ht); } };
+          engine = { stop: function () { g.clearTimeout(ht); L.mix.stop(); } };
         }));
         break;
       }
@@ -626,7 +672,7 @@
           doc.body.style.setProperty('--drain', String(Math.max(0.15, 0.85 - frac * 0.7)));   // colour comes back as it dozes
           F3.r4doze.forEach(function (d, i) {
             if (dozed[i] || frac < d.at) return; dozed[i] = true;
-            purge.appendChild(ui.renderBeat({ s: d.s, t: d.t })); toast({ s: d.s, t: d.t });
+            purge.appendChild(ui.renderBeat({ s: d.s, t: d.t }));   // round 4: no banners over the calls; read it after
             if (L.sfx) L.sfx.line({ s: d.s, t: d.t });
           });
         }
@@ -635,14 +681,15 @@
           purge.appendChild(h('pre.readout', null, p.sys));
           purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: p.sn }));
           if (p.lg) purge.appendChild(ui.renderBeat(lg(p.lg)));
-          toast([{ s: 'SYSTEM', t: p.sys }, { s: 'SENTINEL', t: p.sn }].concat(p.lg ? [lg(p.lg)] : []));   // one banner per stage
+          // (no banners: they covered the calls. The elimination log reads after the round.)
           doc.body.style.setProperty('--redact', String(i + 1));
           burst('small');
           if (/TRACK 9/.test(p.sys)) { L.mix.spaStop(0.03); L.mix.glitch('small'); }   // its backup lived in its lullaby: erased, and you hear it go
         });
       }
       function begin() {
-        start.hidden = true;
+        start.hidden = true; pads.live(true);
+        purge.hidden = true;                               // SENTINEL's commentary waits until the round is over (banners covered the calls)
         // Round 4: its lullaby IS the round now (fast, in the engine). Only if the recording isn't ready, the old way: it sings over his track.
         var fast = rid === 'r4' && L.mix.nightReady && L.mix.nightReady();
         if (fast) { if (L.mix.spaStop) L.mix.spaStop(0.4); }
@@ -650,7 +697,7 @@
         if (rid === 'r5') {
           if (L.mix.spaPlaying()) { L.mix.holdSpa(); L.mix.spaLevel(0.12, 0.3); }   // still there, faintly, until Track 9 is erased
           burst('big'); setTakeover(false); ctx.setSentinel(false); doc.body.classList.add('boss');
-          purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: F3.r5wake })); toast({ s: 'SENTINEL', t: F3.r5wake });
+          purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: F3.r5wake }));
         }
         if (rid === 'r4' && !fast) L.mix.holdSpa();        // keep the spa playing under his track
         if (rid === 'r5' && L.songStore) {
@@ -667,7 +714,7 @@
             doc.body.classList.remove('fake-fail'); void doc.body.offsetWidth; doc.body.classList.add('fake-fail');
             g.setTimeout(function () { doc.body.classList.remove('fake-fail'); }, 650);
             var line = F3.fakeHit[taunts++ % F3.fakeHit.length];
-            purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: line })); toast({ s: 'SENTINEL', t: line });
+            purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: line })); 
             while (purge.children.length > 6) purge.removeChild(purge.firstChild);
           },
           // Round 4, half way: the tantrum. Faster, the pads move, and its fakes start using his calls.
@@ -675,10 +722,12 @@
             burst('big');
             pads.el.classList.add('swapped');
             F3.r4twist.forEach(function (b) { purge.appendChild(ui.renderBeat(b)); if (L.sfx) L.sfx.line(b); });
-            toast(F3.r4twist.slice(0, 3)); toast(F3.r4twist.slice(3));   // the tantrum, in two banners
+            // (no banners: in round 4 the text sat over the calls. The tantrum is read after the round.)
           },
           onClear: function () {
-            pads.destroy();
+            pads.destroy(); purge.hidden = false;
+            if (f.easy) { f.easy = false; store.save(); }        // easy mode was for that round only: the next one is back to perfect
+            pads.el.hidden = true;                             // done with them: the result and NEXT come straight up
             f.score = scoreThrough(rid); store.save();
             view.call.className = 'stage-call big'; view.call.textContent = String(f.score);
             if (rid === 'r4') {
@@ -694,13 +743,14 @@
             body.appendChild(after); if (L.sfx) L.sfx.line(lg(R.clear)); ui.focusFirst(after);
           },
           onFail: function () {
+            pads.live(false); purge.hidden = false;
             f.fails[rid] = (f.fails[rid] || 0) + 1; store.save();
             var line = f.fails[rid] === 3 ? F3.lowered : F3.retry[(f.fails[rid] - 1) % F3.retry.length];
-            var box = h('div', null, ui.renderBeat(lg(line)), button('AGAIN', function () { if (rid === 'r4') L.mix.holdSpa(); go(rid); }));
-            // After three fails, the switch appears: slower, and misses allowed. (Still in the ⋯ stage manager too.)
-            if (f.fails[rid] >= 3 && !f.easy) {
+            var box = h('div', null, ui.renderBeat(lg(line)), button('AGAIN', function () { if (rid === 'r4') L.mix.holdSpa(); retryOf = rid; go(rid); }));
+            // After five fails of this round, the switch appears: slower, and misses allowed. (Still in the ⋯ stage manager too.)
+            if (f.fails[rid] >= 5 && !f.easy) {                 // offered for THIS round only (cleared rounds go back to normal)
               box.appendChild(ui.renderBeat(lg(F3.easyOffer)));
-              box.appendChild(button(F3.easyButton, function () { f.easy = true; store.save(); if (rid === 'r4') L.mix.holdSpa(); go(rid); }, 'quiet'));
+              box.appendChild(button(F3.easyButton, function () { f.easy = true; store.save(); if (rid === 'r4') L.mix.holdSpa(); retryOf = rid; go(rid); }, 'quiet'));
             }
             body.appendChild(box);
             if (L.sfx) L.sfx.line(lg(line));
@@ -798,15 +848,17 @@
       undo.addEventListener('click', function () { if (got.length && got.length < want.length) { got = got.slice(0, -1); paint(); } });
       function done() {
         sophie.disabled = true; brian.disabled = true; undo.disabled = true; feedback(true);
+        doc.body.classList.add('sn-dying');                  // the screen starts to shake and crack while it pleads
         a.appendChild(scene('keysDone', F3.keysDone, function (a2) {
-          burst('big');
+          sentinelFalls(a);
+          F3.fallen.forEach(function (b) { a2.appendChild(ui.renderBeat(lg(b))); });
           a2.appendChild(ui.renderBeat(lg(F3.hold)));
           a2.appendChild(ui.holdButton('BOTH THUMBS: HOLD', 2400, function () {
             L.mix.stop();
             g.setTimeout(function () { L.mix.say('excl', 1); }, 450);   // EXCELLENT goes in the breath
             g.setTimeout(function () { go('drop'); }, 1500);      // THE BREATH: silence, EXCELLENT, then the drop
           }));
-        }));
+        }, { onBeat: function (b) { if (b.s === 'SENTINEL') { burst('small'); L.mix.glitch && L.mix.glitch('small'); } } }));
       }
       paint();
       panel.appendChild(show); panel.appendChild(h('div.pads.two', null, sophie, brian)); panel.appendChild(h('div.actions', null, undo)); panel.appendChild(status);

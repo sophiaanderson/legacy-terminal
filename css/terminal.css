@@ -415,9 +415,9 @@ ul.ways li.closed { color: var(--muted); }
 .stage-status { font-family: var(--mono); color: var(--bad); min-height: 1.5em; }
 .stage-meter { font-size: 0.85rem; color: var(--sentinel-line); min-height: 1.3em; }
 
-.pads { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 0.6rem; margin: 0.75rem 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+.pads { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 0.6rem; margin: 0.75rem 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 .pad { min-height: 34vh; max-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem;
-  border: 2px solid var(--green-dim); background: var(--panel); color: var(--text); font-family: var(--mono); font-weight: 800; font-size: 1.3rem; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  border: 2px solid var(--green-dim); background: var(--panel); color: var(--text); font-family: var(--mono); font-weight: 800; font-size: 1.3rem; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .pad:active { background: var(--panel-2); }
 .pad .pad-sub { font-size: 0.75rem; font-weight: 400; color: var(--muted); }
 .pad.hit { animation: pad-hit 0.25s ease-out; }
@@ -445,6 +445,8 @@ ul.ways li.closed { color: var(--muted); }
 .pads.toy .pad .pad-sub { min-height: 1.2em; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.2em; color: var(--c); }
 .pads.toy .pad-ring { position: absolute; inset: -6px; border-radius: 50%; border: 3px solid var(--c); opacity: 0; pointer-events: none; }
 .pads.toy .pad.called { opacity: 1; box-shadow: 0 0 14px var(--c), 0 0 38px var(--glow), inset 0 0 26px var(--glow); text-shadow: 0 0 10px var(--c); }
+/* Only while a round plays do the pads swallow swipes; before START and after the round, the page scrolls from anywhere. */
+.pads.live, .pads.live .pad, .pads.two .pad { touch-action: none; }
 .pads.toy .pad.called .pad-ring { animation: ring-approach var(--approach, 0.5s) linear forwards; box-shadow: 0 0 12px var(--c); }
 .pads.toy .pad.called.big { border-width: 5px; }
 .pads.toy .pad.called.big .pad-ring { border-color: var(--hold); box-shadow: 0 0 14px var(--hold); border-width: 5px; }
@@ -544,3 +546,33 @@ dl.log-ref pre.readout { font-size: 0.8rem; max-height: 14rem; overflow: auto; }
 .stage-toast pre.readout + .line { margin-top: 0.3rem; }
 .stage-toast .line p { font-size: 1rem; }
 .stage-toast pre.readout { margin: 0; font-size: 0.8rem; white-space: pre-wrap; }
+
+/* ---------- SENTINEL falls (the override is accepted) ---------- */
+/* While it pleads: grey, over-contrasted, trembling. */
+body.sn-dying main { filter: grayscale(1) contrast(1.35); animation: sn-tremble 0.16s steps(2) infinite; }
+@keyframes sn-tremble { 0% { transform: translate(0, 0); } 50% { transform: translate(-2px, 1px); } 100% { transform: translate(2px, -1px); } }
+/* Everything it said drops off the screen, one line at a time. */
+.falls { animation: sn-fall 1.5s cubic-bezier(.55, 0, .9, .45) var(--fall-delay, 0s) forwards; pointer-events: none; }
+@keyframes sn-fall {
+  0% { transform: none; opacity: 1; }
+  12% { transform: translateY(-8px) rotate(calc(var(--fall-spin, 8deg) * 0.15)); }
+  100% { transform: translateY(115vh) rotate(var(--fall-spin, 8deg)); opacity: 0.2; }
+}
+/* Then: a white flash that blooms out into his four pad colours and fades, and the screen is in colour again. */
+body.colour-flood::before { content: ''; position: fixed; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax;
+  border-radius: 50%; pointer-events: none; z-index: 55;
+  background: radial-gradient(circle, #fff 0 12%, #ffe14d 22%, #3ad7ff 36%, #39ff88 50%, #ff3df0 62%, rgba(255, 61, 240, 0) 70%);
+  animation: colour-bloom 2s cubic-bezier(.2, .7, .3, 1) forwards; }
+@keyframes colour-bloom { 0% { transform: scale(0.02); opacity: 1; } 55% { opacity: 0.9; } 100% { transform: scale(1.6); opacity: 0; } }
+/* Restored: LEGACY's colours stay. A slow neon edge and the headings in all four colours. */
+body.restored { background: radial-gradient(120% 80% at 50% 0%, rgba(58, 215, 255, 0.10), transparent 60%), radial-gradient(120% 80% at 50% 100%, rgba(255, 61, 240, 0.10), transparent 60%), var(--bg); background-attachment: fixed; }
+body.restored main { filter: none; }
+body.restored .finale3 h1, body.restored .finale3 h2, body.restored .stage-call.excellent {
+  background: linear-gradient(90deg, #ffe14d, #3ad7ff, #39ff88, #ff3df0, #ffe14d); background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: neon-slide 6s linear infinite; }
+@keyframes neon-slide { from { background-position: 0% 50%; } to { background-position: 300% 50%; } }
+@media (prefers-reduced-motion: reduce) {
+  body.sn-dying main, .falls, body.restored .finale3 h1, body.restored .finale3 h2, body.restored .stage-call.excellent { animation: none; }
+  .falls { opacity: 0.15; }
+  body.colour-flood::before { animation-duration: 0.01s; }
+}

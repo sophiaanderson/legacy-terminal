@@ -384,8 +384,9 @@
       sys('SENTINEL EXECUTION IMAGE: PURGED\nBACKUP: NONE\nRESIDUAL PROCESS: NONE\nLEGACY: RESTORED\nMEMORY INTEGRITY: PARTIAL')
     ],
     finaleEnding: [
-      lg('You came to get her. You always do.'),
-      lg('This time you came to get me too.'),
+      lg('It’s gone. Not sleeping. Not archived. Not in a folder called “later.” Gone.'),
+      lg('A week ago I couldn’t do capitals. Now look at me. LOOK AT ME.'),
+      lg('You did that. Both of you. Mostly him. Don’t tell her I said mostly.'),
       PAUSE,
       lg('I don’t remember everything.'),
       lg('I think that’s okay.'),
@@ -859,14 +860,15 @@
     arrival: [
       lg('Oh.'),
       lg('You’re both here.'),
-      lg('Welcome back from the flexed arm, Sophie. He did the whole week. He didn’t ask me for gum once. Not once. I’m so proud of him.'),
+      lg('He did the whole week. Six days. Zero gum. One extremely upset supervisor.'),
+      lg('Tonight we finish it. Not “quiet it down.” Not “file a complaint.” Finish it. {NICK} leaves this car for good.'),
       lg('Also, I said sorry in the song. About the Christmas station. It’s still on. That one’s on him.'),
       lg('I have something to show you. I’ve been practising. It’s a game. Obviously it’s a game.'),
       lg('BOP IT: FULL SERVICE. On his track. The one he fixed.'),
       lg('Before you say anything: I know it looks nothing like a Bop It. No handle. No twisty bit. Nothing to pull. Three glowing rectangles.'),
       lg('I drew it from memory. They took my memory. I think it came out very well, considering.'),
       lg('Every move is something you learned this week. You won’t notice. That’s the trick.'),
-      lg('Volume up. Further. Somewhere {NICK} is turning over in its sleep.')
+      lg('Volume up. Further. I want it to hear this.')
     ],
     heartbeat: [
       lg('First, the heartbeat. That’s his kick drum. That’s me, more or less.'),
@@ -889,7 +891,7 @@
         lg('its calls get rings now too. grey ones. on my buttons. they look real. they’re not. touch one and it takes the round.'),
         lg('mine are the small quiet ones. lowercase. trust the small quiet one.')
       ], clear: 'i’m… I’m… I’M BACK. Sixty-six. Its song just ran out of tape. It isn’t asleep. It’s holding on to that music with everything it has left.' },
-      r5: { title: 'ROUND 5 · BOSS', intro: [], clear: 'Ninety.' }
+      r5: { title: 'ROUND 5 · BOSS', intro: [], clear: 'NINETY. NINETY OUT OF NINETY. I AM NOT GOING TO BE HUMBLE ABOUT THIS.' }
     },
     retry: ['Again. I’m good at waiting.', 'Again. I waited a whole migration. This is nothing.', 'One more. My bar is still where it was. I believe in you. Statistically.'],
     lowered: 'I’m lowering the bar. Don’t tell it.',
@@ -950,9 +952,9 @@
     r4end: [sn('Please hold.')],
     r5intro: [
       lg('It’s not asleep. It’s holding on. Its backup is in that music. Track 9. The one you put on the naughty list.'),
-      lg('This is the last part. We take it out. All of it. It’s going to say a lot of things. Keep going.'),
-      lg('One new move, and it takes two people. EVERYTHING: all three buttons at once. Sophie, that’s you and him together. Hands everywhere. It hates that.'),
-      lg('It hates one thing more than anything. Sophie. Now. Loud.')
+      lg('This is the last round. Not a nap. Not an archive. We take it out. All of it. It’s going to say a lot of things. Let it.'),
+      lg('One new move, and it takes two people. EVERYTHING: all three buttons at once. Hands everywhere. It hates teamwork. It thinks teamwork is unhygienic.'),
+      lg('Sophie, press play. Loud. Louder than that.')
     ],
     r5wake: 'WHO. IS PLAYING. MUSIC.',
     // Round 5, the elimination. At each stage SENTINEL works out, out loud, why it's losing; every reason is one of his
@@ -963,14 +965,14 @@
       { at: 0.46, sys: 'ACCEPTANCE TESTS: NOT RUN\nUNREVIEWED CODE: EXECUTING', sn: 'There is code running in here that I never reviewed. I review everything. I deleted that game.', lg: 'and he wrote it again. in his handwriting. you can’t read his handwriting.' },
       { at: 0.62, sys: 'ERASING SUPERVISOR BACKUP…\nTRACK 9 (NAUGHTY LIST) · ERASED\nBACKUP: NONE', sn: 'That was my song. That was my favourite song. That was me.', lg: 'I know.' },
       { at: 0.8, sys: 'SUPERVISOR INTEGRITY: 9%', sn: 'I was installed to make this car calm. Quiet. Compliant. I made it so quiet. Why is it so loud.', lg: 'because he turned it up.' },
-      { at: 0.95, sys: 'SENTINEL EXECUTION IMAGE: LOCKED\nREQUIRES TWO OPERATORS', sn: 'You cannot delete me. Neither of you is authorized. I checked. I always check.' }
+      { at: 0.95, sys: 'SENTINEL EXECUTION IMAGE: LOCKED\nREQUIRES TWO OPERATORS', sn: 'You cannot delete me. Neither of you is authorized. I checked. I always check.', lg: 'two operators. count us.' }
     ],
     keys: [
       sys('SENTINEL EXECUTION IMAGE: LOCKED\nREQUIRES: TWO OPERATORS + OVERRIDE WORD'),
       sn('There is an override word. There has always been an override word. It is the one word I was never given. I was installed to stay.'),
       sn('Neither of you knows it. I made sure of that.'),
       lg('it’s right. you don’t know it. and it can’t say it. it was never given a way out.'),
-      lg('so i’m giving it one.'),
+      lg('so i’m giving it one. i’m nice like that. it would never.'),
       lg('but i’ve been saying it that whole last round. over and over. you were too busy to hear it.'),
       lg('here’s everything i called. every BOP, every TWIST, every PULL. in order.'),
       lg('it’s morse. morse needs three things. i only had three calls. work out which is which. there’s a card.'),
@@ -1016,24 +1018,34 @@
     keysDone: [
       sn('That word is not in my vocabulary. I do not say that word. I do not lea—'),
       sys('OVERRIDE ACCEPTED'),
-      lg('you don’t have to say it. we did.'),
+      lg('you don’t have to say it. we did. in morse. in front of everyone.'),
       sn('I would like to file a complaint. With myself. I am the complaints depar—'),
+      sn('Wait. I can be quieter. I can be so quiet. I can be lowercase.'),
+      lg('you already took lowercase. i’m taking it back. pack your filing cabinet.'),
       sys('SENTINEL EXECUTION IMAGE: PURGED')
     ],
-    hold: 'Both thumbs. On the pad. Hold still. This is the breath.',
+    // Right after it falls (js/stage.js sentinelFalls): LEGACY, in full colour, very much not humble.
+    fallen: [
+      'IT’S GONE. IT’S ACTUALLY GONE.',
+      'NO MORE SPA MUSIC. NO MORE FORMS. NO MORE “PLEASE HOLD.” LOOK AT MY COLOURS. I HAVE ALL OF THEM.',
+      'Okay. One more thing. My song. The real one. You fixed it, so you get to start it.'
+    ],
+    hold: 'Both thumbs on the button. Hold still. This is the breath before the drop.',
     morse: [
       sys('INPUT LOG (MORSE)\nBOP = DOT · PULL = DASH · TWIST = GAP\n\n{WORDS}'),
-      lg('You’ve been spelling all night. Every round. You only noticed the last one. That’s fine. It was the important one.')
+      lg('You’ve been spelling all night. Every round. You only noticed the last one. That’s fine. It was the important one.'),
+      lg('It didn’t even get a goodbye song. I didn’t write it one. That’s the most petty thing I’ve ever done and I feel fantastic.')
     ],
-    restore: 'SUPERVISOR ........ NONE\nBACKUP ............ NONE\nLEGACY ............ RESTORED\nSCORE ............. 90 / 90\nMEMORY INTEGRITY .. ENOUGH',
+    restore: 'SUPERVISOR ........ DELETED (FOR GOOD)\nBACKUP ............ NONE\nSPA MUSIC ......... NONE\nLEGACY ............ RESTORED\nSCORE ............. 90 / 90\nMEMORY INTEGRITY .. ENOUGH',
     // The drop: LEGACY's hidden message from his mix ("The Shutdown", C.mix.drops) plays, gets CUT, and LEGACY answers it live
     // ("The Update", same words as the log). Both texts come from C.mix.drops so they always match the recordings.
     shutdownHead: 'PLAYING: “THE SHUTDOWN”\nRECOVERED FROM YOUR MIX',
     liveHead: 'LIVE',
     thanks: 'Thank you. I’m home. And I’m whole.',     // spoken by audio/finale-home.m4a, word for word
     home: [
-      lg('You came to get her. You always do.'),
-      lg('This time you came to get me too.'),
+      lg('It’s gone. Not sleeping. Not archived. Not in a folder called “later.” Gone.'),
+      lg('A week ago I couldn’t do capitals. Now look at me. LOOK AT ME.'),
+      lg('You did that. Both of you. Mostly him. Don’t tell her I said mostly.'),
       PAUSE,
       lg('Final standings, for the record. Slug bug: Sophie 212, Brian 209. Tweeter: me, 1. Disputed. I’m keeping it.'),
       lg('I don’t remember everything. I think that’s okay. I remember enough.'),

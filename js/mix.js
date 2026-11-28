@@ -471,7 +471,10 @@
     for (var i = 0; i < n; i++) { var x = i * 2 / n - 1; c[i] = (1 + a) * x / (1 + a * Math.abs(x)) * (1 / (1 + k * 0.6)); }
     return c;
   }
+  var trackHold = 0;                                     // holdTrack(): the next stop() (a screen change) leaves the song playing
   function stop() {
+    if (trackHold && Date.now() < trackHold) { trackHold = 0; return; }
+    trackHold = 0;
     playing = false; mode = null;
     if (songSrc) { try { songSrc.stop(); } catch (e) {} songSrc = null; }
     mashSources.forEach(function (x) { try { x.stop(); } catch (e) {} }); mashSources = []; lastSong = null;
@@ -690,6 +693,7 @@
             spaPlaying: function () { return !!spaState; },
             /** Let the spa keep playing through the next stop() (e.g. a screen change that re-renders). */
             holdSpa: function () { spaHold = true; },
+            holdTrack: function () { if (playing) trackHold = Date.now() + 1500; },
             isPlaying: function () { return playing; }, mode: function () { return mode; },
             loaded: function () { return { decoded: Object.keys(buffers), fallback: Object.keys(htmlClips) }; } };
 })(globalThis);

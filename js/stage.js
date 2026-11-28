@@ -42,6 +42,11 @@
     var mine = s.puzzles.beat, ok = P.checkBeat(mine).ok;
     var base = JSON.parse(JSON.stringify(ok ? mine : P.beatSolution));
     if (!ok) base.bpm = 124;
+    // His melody is the backing, always: even if his beat didn't pass (or he was rescued past Sunday), his LEAD row
+    // comes with it. Only if he never wrote a note does the reference melody stand in.
+    var hisLead = mine && mine.grid && typeof mine.grid.lead === 'string' && /[1-5]/.test(mine.grid.lead) ? mine.grid.lead : null;
+    base.grid.lead = hisLead || (/[1-5]/.test(base.grid.lead || '') ? base.grid.lead : P.beatSolution.grid.lead);
+    base.sections.drop.lead = base.sections.intro.lead = base.sections.build.lead = true;
     return base;
   }
   function hisBpm(s) { return hisSong(s).bpm || 124; }
@@ -156,18 +161,18 @@
     }
     function onKeyUp(e) { if (!keys[e.key]) return; var k = 'k' + e.key.toLowerCase(); release(live[k]); delete live[k]; }
     doc.addEventListener('keydown', onKey); doc.addEventListener('keyup', onKeyUp);
-    function clearCue() { Object.keys(byMove).forEach(function (m) { var b = byMove[m]; b.classList.remove('called', 'big', 'quiet'); b.querySelector('.pad-sub').textContent = b._sub; }); }
+    function clearCue() { Object.keys(byMove).forEach(function (m) { var b = byMove[m]; b.classList.remove('called', 'big', 'quiet', 'fake'); b.querySelector('.pad-sub').textContent = b._sub; }); }
     return {
       el: wrap,
       flash: function (move, ok) { var b = byMove[move]; if (!b) return; b.classList.remove('hit', 'miss'); void b.offsetWidth; b.classList.add(ok ? 'hit' : 'miss'); },
       /** Light the called pad; its ring closes over dur seconds, landing on the beat. big: true = HOLD, false = tap, null = any. */
-      cue: function (move, big, dur, quiet) {
+      cue: function (move, big, dur, quiet, fake) {      // fake: SENTINEL's ring (looks like a call; pressing it costs)
         var b = byMove[move]; if (!b) return;
         clearCue(); g.clearTimeout(cueTimer);
         b.style.setProperty('--approach', Math.max(0.15, dur) + 's');
         void b.offsetWidth;
-        b.classList.add('called'); if (big) b.classList.add('big'); if (quiet) b.classList.add('quiet');
-        b.querySelector('.pad-sub').textContent = big ? 'HOLD' : big === false ? 'tap' : '';
+        b.classList.add('called'); if (big) b.classList.add('big'); if (quiet) b.classList.add('quiet'); if (fake) b.classList.add('fake');
+        b.querySelector('.pad-sub').textContent = fake ? '' : big ? 'HOLD' : big === false ? 'tap' : '';
         cueTimer = g.setTimeout(clearCue, (dur + 0.3) * 1000);
       },
       clearCue: clearCue,
@@ -180,11 +185,14 @@
   function Round(o) {
     // o: { s, rid, view, pads, onClear(), onFail(), onProgress(frac) }
     var s = o.s, f = s.finale, r = Q.round(o.rid);
-    var chart = Q.chart(o.rid, seedOf(s), o.rid === 'r5' ? F3.bossFakes : F3.fakes);
+    var chart = Q.timeline(o.rid, seedOf(s), o.rid === 'r5' ? F3.bossFakes : F3.fakes);   // calls laid on 4-bar phrases
     var target = f.fails[o.rid] >= 3 ? Math.ceil(r.target * 0.8) : r.target;
     var win = Q.windowFor(o.rid, f.easy), off = f.offsetMs / 1000, visOff = Math.max(0, Math.min(0.3, off));
-    var bpm = tempoFor(o.rid, s), endBpm = tempoFor(o.rid, s, 'end'), RAMP = o.rid === 'r4' ? 3 : 2;   // BPM added per bar
-    var song = hisSong(s), beat = -1, LEAD = 8, nextCall = 8, idx = 0, events = [], score = 0, done = false, chartOver = false, timers = [], stopped = false;
+    var bpm = tempoFor(o.rid, s), endBpm = tempoFor(o.rid, s, 'end'), PHRASE_UP = o.rid === 'r4' ? 8 : 4;   // BPM added per 4-bar phrase
+    var BPB = Q.beatsPerBar(o.rid), LEAD = 2 * BPB;      // two bars of count-in, whatever the meter
+    var song = hisSong(s), beat = -1, nextCall = LEAD, idx = 0, events = [], score = 0, done = false, chartOver = false, timers = [], stopped = false;
+    // Round 4: SENTINEL's lullaby, fast, as the backing. It speeds up every phrase; at half way it throws a tantrum.
+    var lull = null, LULL_RATE = f.easy ? 1.12 : 1.3, twisted = false;
     var ac = L.mix.ctx();
     if (!ac) { o.view.status.textContent = 'This browser has no sound. Use the stage manager (hold ⋯) to skip.'; return { stop: function () {} }; }
 
@@ -193,8 +201,10 @@
       var v = o.view;
       v.call.className = 'stage-call'; void v.call.offsetWidth; v.call.classList.add('pulse');   // every call pulses, even a repeat
       if (c.fake) {
-        if (drowsy()) { v.call.textContent = c.fake.toLowerCase().replace(' it', '… it…'); v.call.classList.add('fake', 'drowsy'); return; }
-        v.call.textContent = c.fake; v.call.classList.add('fake'); return;
+        if (c.pad) o.pads.cue(c.pad, null, dur, false, true);   // its ring closes on a real pad. do nothing.
+        var name = twisted && c.pad ? c.pad + ' IT' : c.fake;      // after the tantrum it does his voice
+        if (drowsy()) { v.call.textContent = name.toLowerCase().replace(' it', '… it…'); v.call.classList.add('fake', 'drowsy'); return; }
+        v.call.textContent = name; v.call.classList.add('fake'); return;
       }
       if (c.move === 'PASS') { v.call.textContent = 'PASS IT'; v.call.classList.add('pass'); v.who.textContent = c.player ? 'SOPHIE’S TURN' : 'BRIAN’S TURN'; return; }
       // Case means size, so rounds without sizes say it in plain case: "Bop it".
@@ -212,7 +222,7 @@
       if (c.whisper) { v.call.textContent = ''; v.whisper.textContent = word.toLowerCase() + (c.big ? ' · hold' : ''); v.whisper.classList.remove('pop'); void v.whisper.offsetWidth; v.whisper.classList.add('pop'); return; }
       v.call.textContent = txt; if (c.big === true) v.call.classList.add('big'); if (c.big === false) v.call.classList.add('small');
     }
-    function drowsy() { return o.rid === 'r4' && score / target >= 0.45; }
+    function drowsy() { return o.rid === 'r4' && score / target >= 0.85; }   // it only starts nodding off at the very end
     function paint() {
       o.view.score.textContent = 'ROUND ' + score + ' / ' + target + '   ·   TOTAL ' + (f.score + score) + ' / 90';
       o.view.bar.style.width = Math.min(100, 100 * score / target) + '%';
@@ -221,6 +231,7 @@
     }
     function finish(ok) {
       if (done) return; done = true;
+      if (ok && lull) { lull.tapeStop(1.8); g.setTimeout(function () { if (stopped) return; stop(); o.onClear(); }, 2000); return; }   // its lullaby winds down to nothing
       if (ok && o.rid === 'r4') L.mix.holdSpa();            // SENTINEL sleeps on in its spa through the R5 intro
       g.setTimeout(function () { if (stopped) return; stop(); ok ? o.onClear() : o.onFail(); }, ok ? 700 : 400);
     }
@@ -239,13 +250,19 @@
       if (!best) return;                                   // between beats: ignored, never punished
       best.judged = true;
       var c = best.c;
-      if (c.fake) { f.meter++; o.pads.flash(p.move, false); feedback(false); o.view.status.textContent = 'that was it. not me.'; paint(); return; }
+      if (c.fake) {                                        // pressed SENTINEL's call: it takes two back, loudly
+        f.meter += 2; score = Math.max(0, score - 2);
+        o.pads.flash(p.move, false); feedback(false);
+        o.view.status.textContent = '−2 · that was it. not me.';
+        if (o.onFake) { try { o.onFake(); } catch (e) {} }
+        paint(); return;
+      }
       if (c.move === 'PASS') return;
       if (c.move === 'HIDE') { score++; feedback(true); o.view.status.textContent = ''; paint(); if (score >= target) finish(true); return; }
       var ok = p.move === c.move && (c.big == null || p.big === c.big);
       o.pads.flash(p.move, ok);
       if (ok) moveSound(c.move, c.big, Math.max(ac.currentTime + 0.005, best.due), c.whisper ? 0.9 : 1.6);   // quantized: on the beat
-      if (ok && c.big === true) holdSound(c.move, Math.max(ac.currentTime + 0.005, best.due), 60 / bpm * 3, c.whisper);   // the HOLD sings through its bar
+      if (ok && c.big === true) holdSound(c.move, Math.max(ac.currentTime + 0.005, best.due), 60 / bpm * Math.max(1, (c.beats || 4) - 1), c.whisper);   // the HOLD sings through its bar
       else feedback(false);
       if (ok) { score++; o.view.status.textContent = ''; if (score >= target) finish(true); }
       else { f.meter++; o.view.status.textContent = p.move !== c.move ? 'wrong move' : (c.big ? 'HOLD IT (keep your thumb down)' : 'just a tap'); }
@@ -266,16 +283,25 @@
     }, 30);
 
     function onStep(t, step, bar, STEP) {
+        // Tempo goes up once per 4-bar phrase, never mid-phrase, so the groove settles. A snare fill on the last two
+        // beats announces it, and the change is set on the last eighth so the new tempo starts exactly on the downbeat.
+        var into = beat + (step % 2 ? 0 : 1);                  // the beat this step belongs to (beat increments below)
+        if (lull) bpm = 60 / (2 * STEP);
+        var PH = 4 * BPB, lastBar = into >= LEAD && (into - LEAD) % PH >= PH - BPB, rising = bpm < endBpm && !o.boss && !lull && !done && !chartOver;
+        if (rising && lastBar && step >= 4 && L.mix.accent) L.mix.accent('snare', t, 0.35 + 0.15 * (step - 4));
+        if (rising && lastBar && step === 7) bpm = Math.min(endBpm, bpm + PHRASE_UP);
         if (step % 2) return;
         beat++;
-        if (step === 0 && beat >= LEAD && bpm < endBpm) bpm = Math.min(endBpm, bpm + RAMP);    // speeds up bar by bar once calls start
         if (done || chartOver) return;
-        if (beat < LEAD) { if (beat >= 4) { var n = 8 - beat; at(t, function () { o.view.call.className = 'stage-call count'; o.view.call.textContent = String(n); }); } return; }
-        // Calls every 2 beats; a HOLD owns a whole bar (the next call waits 2 more beats while it sustains).
+        // Round 4: faster every phrase (it's enjoying this); at half way, the tantrum.
+        if (lull && step === 0 && beat > LEAD && (beat - LEAD) % (4 * BPB) === 0) lull.setRate(Math.min(1.6, lull.rate() + 0.04));
+        if (lull && !twisted && score / target >= 0.5) { twisted = true; lull.setRate(Math.min(1.75, lull.rate() + 0.14)); if (o.onTwist) { try { o.onTwist(); } catch (e) {} } }
+        if (beat < LEAD) { if (beat >= LEAD - Math.min(4, BPB)) { var n = LEAD - beat; at(t, function () { o.view.call.className = 'stage-call count'; o.view.call.textContent = String(n); }); } return; }
+        // Calls on beats 1 and 3 (hit on 2 and 4). A HOLD is always called on beat 1 and owns the whole bar.
         if (beat < nextCall) return;
         var c = chart[idx++];
         if (!c) { chartOver = true; return; }
-        nextCall = beat + (c.real && c.big === true ? 4 : 2);
+        nextCall = beat + (c.beats || 2);
         if (c.move === 'REST') return;                        // breathing room after HIDE IT to flip back
         var ev = { c: c, due: t + 2 * STEP, judged: false, hide: c.move === 'HIDE', late: Math.max(0.8, 3 * STEP) };
         events.push(ev);
@@ -297,9 +323,11 @@
     function onTilt(e) { if (e.beta == null) return; sensor = true; if (Math.abs(e.beta) > 140) lastDownAt = ac.currentTime - off; }
     function onHideKey(e) { if (e.key === 'h' || e.key === 'H') { sensor = true; lastDownAt = ac.currentTime - off; } }
     g.addEventListener('deviceorientation', onTilt); doc.addEventListener('keydown', onHideKey);
-    function hisTrack() { L.mix.loopBeat(function () { song.bpm = bpm; return song; }, { clips: clips(), onStep: onStep, parts: INSTRUMENTAL }); }
+    function hisTrack() { L.mix.loopBeat(function () { song.bpm = bpm; return song; }, { clips: clips(), onStep: onStep, parts: INSTRUMENTAL, leadGain: 1.8 }); }   // his melody up front
     // Round 5 can ride the boss song (stored on this device); anything wrong with it falls back to his track.
-    if (o.boss) { bpm = endBpm = o.boss.bpm; L.mix.playBuffer(o.boss.data, { bpm: o.boss.bpm, offset: o.boss.offset, onStep: onStep, level: 1.1 }).then(function (ok) { if (!ok && !stopped) { bpm = endBpm = tempoFor('r5', s); hisTrack(); } }); }
+    if (o.rid === 'r4' && L.mix.lullaby) { lull = L.mix.lullaby({ rate: LULL_RATE, onStep: onStep, level: 1.0 }); if (lull) bpm = lull.bpm(); }
+    if (lull) { /* its lullaby is the backing */ }
+    else if (o.boss) { bpm = endBpm = o.boss.bpm; L.mix.playBuffer(o.boss.data, { bpm: o.boss.bpm, offset: o.boss.offset, onStep: onStep, level: 1.1 }).then(function (ok) { if (!ok && !stopped) { bpm = endBpm = tempoFor('r5', s); hisTrack(); } }); }
     else hisTrack();
     paint();
     function stop() { stopped = true; g.clearInterval(judge); timers.forEach(g.clearTimeout); L.mix.stop(); g.removeEventListener('deviceorientation', onTilt); doc.removeEventListener('keydown', onHideKey); }
@@ -570,25 +598,48 @@
       }
       function begin() {
         start.hidden = true;
-        if (rid === 'r4') L.mix.spa({ sing: true, from: 7.47, bpm: 81, level: 0.5, chime: 'beat', chimeOffset: 0.17, fadeIn: 1 });   // it SINGS now: Compliant Night, its backup
+        // Round 4: its lullaby IS the round now (fast, in the engine). Only if the recording isn't ready, the old way: it sings over his track.
+        var fast = rid === 'r4' && L.mix.nightReady && L.mix.nightReady();
+        if (fast) { if (L.mix.spaStop) L.mix.spaStop(0.4); }
+        else if (rid === 'r4') L.mix.spa({ sing: true, from: 7.47, bpm: 81, level: 0.5, chime: 'beat', chimeOffset: 0.17, fadeIn: 1 });   // it SINGS now: Compliant Night, its backup
         if (rid === 'r5') {
           if (L.mix.spaPlaying()) { L.mix.holdSpa(); L.mix.spaLevel(0.12, 0.3); }   // still there, faintly, until Track 9 is erased
           burst('big'); setTakeover(false); ctx.setSentinel(false); doc.body.classList.add('boss');
           purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: F3.r5wake }));
         }
-        if (rid === 'r4') L.mix.holdSpa();                 // keep the spa playing under his track
+        if (rid === 'r4' && !fast) L.mix.holdSpa();        // keep the spa playing under his track
         if (rid === 'r5' && L.songStore) {
           start.disabled = true;
           L.songStore.load().then(function (rec) { start.disabled = false; run(rec && rec.bpm ? rec : null); });
         } else run(null);
       }
       function run(boss) {
+        var taunts = 0;
         engine = Round({ s: s, rid: rid, view: view, pads: pads, onProgress: onProgress, boss: boss,
+          // Pressed one of SENTINEL's calls: −2, the screen shakes, and it gloats.
+          onFake: function () {
+            burst('small');
+            doc.body.classList.remove('fake-fail'); void doc.body.offsetWidth; doc.body.classList.add('fake-fail');
+            g.setTimeout(function () { doc.body.classList.remove('fake-fail'); }, 650);
+            var line = F3.fakeHit[taunts++ % F3.fakeHit.length];
+            purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: line }));
+            while (purge.children.length > 6) purge.removeChild(purge.firstChild);
+          },
+          // Round 4, half way: the tantrum. Faster, the pads move, and its fakes start using his calls.
+          onTwist: function () {
+            burst('big');
+            pads.el.classList.add('swapped');
+            F3.r4twist.forEach(function (b) { purge.appendChild(ui.renderBeat(b)); if (L.sfx) L.sfx.line(b); });
+          },
           onClear: function () {
             pads.destroy();
             f.score = scoreThrough(rid); store.save();
             view.call.className = 'stage-call big'; view.call.textContent = String(f.score);
-            if (rid === 'r4') { L.mix.spaLevel(0.3, 2); burst('small'); doc.body.style.removeProperty('--drain'); setTakeover(false); ctx.setSentinel(false); }
+            if (rid === 'r4') {
+              // It loses: its lullaby wound down to nothing (the engine's tape-stop). Now it sleeps in it, at its own slow speed.
+              if (L.mix.spaPlaying && L.mix.spaPlaying()) L.mix.spaLevel(0.3, 2); else L.mix.spa({ bpm: 81, level: 0.35, chime: 'beat', chimeOffset: 0.17, fadeIn: 3 });
+              burst('small'); doc.body.style.removeProperty('--drain'); setTakeover(false); ctx.setSentinel(false);
+            }
             var next = ORDER[ORDER.indexOf(rid) + 1];
             var after = h('div', null, ui.renderBeat(lg(R.clear)));
             if (rid === 'r3') { after.appendChild(button('…', function () { go('glitch'); })); burst('small'); }
@@ -743,5 +794,5 @@
     return { el: canvas, smile: smile };
   }
 
-  L.stage = { render: render, complete: complete, stop: stopEngine, roHash: roHash, _roNorm: roNorm, _roCheck: roCheck, ORDER: ORDER, _vars: vars, _tpl: tpl };
+  L.stage = { render: render, complete: complete, stop: stopEngine, roHash: roHash, _roNorm: roNorm, _roCheck: roCheck, ORDER: ORDER, _vars: vars, _tpl: tpl, _hisSong: hisSong };
 })(globalThis);

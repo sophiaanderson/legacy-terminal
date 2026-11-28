@@ -22,7 +22,7 @@
   'use strict';
   var L = (g.Legacy = g.Legacy || {});
   var KEY = 'legacyOrgBundle', ITER = 200000;
-  var BUNDLE_ID = '6a564d6badd4def0';                      // replaced with org.bin's hash by scripts/package-site.py
+  var BUNDLE_ID = '642aac1a5bc40095';                      // replaced with org.bin's hash by scripts/package-site.py
   var ID_KEY = 'legacyOrgBundleId', PASS_KEY = 'legacyOrgPin';   // Sophie's phone only: so a new build refreshes itself
 
   function stored() { try { return g.localStorage.getItem(KEY); } catch (e) { return null; } }

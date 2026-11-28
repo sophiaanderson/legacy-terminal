@@ -44,7 +44,7 @@
       keys: { glovebox: false, cargofloor: false },
       fri: { exploit: null, got: {}, fails: 0, eaten: 0, eggs: 0, leetSeen: false, log: [] },
       sat: { version: '4.8', leetPatched: false, splitPatched: false, hexPatched: false, fixedIn: { leet: null, split: null, hex: null },
-             got: { BOP: false, TWIST: false, PULL: false }, decoded: { BOP: false, TWIST: false, PULL: false }, decodeFails: 0, eggs: 0, scratchRuns: 0, fails: 0, patchedOnce: false, scratchSrc: null, log: [] },
+             got: { BOP: false, TWIST: false, PULL: false }, decoded: { BOP: false, TWIST: false, PULL: false }, decodeFails: 0, eggs: 0, scratchRuns: 0, fails: 0, patchedOnce: false, scratchSrc: null, satSrc: null, bopMode: 'bytes', bopBest: { bytes: 0, lines: 0 }, bopFails: 0, bopSizeHints: 0, log: [] },
       beat: JSON.parse(JSON.stringify(L.puzzles ? L.puzzles.beatStart : { grid: {}, sections: {} })),
       face: { v: 2, h: 9, i: 1, c: 2 },
       vault: { haunted: false, boulder: false, emperor: false, seattle: false, open: false },
@@ -250,7 +250,7 @@
     if (step === 'keys') pz.keys.glovebox = pz.keys.cargofloor = true;   // done.keys is recomputed from these
     if (step === 'words') { if (!pz.fri.exploit) pz.fri.exploit = 'caps'; pz.fri.got = { brian: 'BRIAN', legacy: 'LEGACY', heart: 'MISS', excellent: 'EXCELLENT' }; }
     if (step === 'channel') { pz.sat.got = { BOP: true, TWIST: true, PULL: true }; pz.sat.decoded = { BOP: true, TWIST: true, PULL: true }; }
-    if (step === 'beat') { var b = JSON.parse(JSON.stringify(P.beatSolution)); b.bpm = pz.beat.bpm || b.bpm; b.voice = pz.beat.voice || b.voice; pz.beat = b; }
+    if (step === 'beat') { var b = JSON.parse(JSON.stringify(P.beatSolution)); b.bpm = pz.beat.bpm || b.bpm; b.voice = pz.beat.voice || b.voice; if (pz.beat.grid && /[1-5]/.test(pz.beat.grid.lead || '')) b.grid.lead = pz.beat.grid.lead; pz.beat = b; }   // a rescue keeps his melody
     if (step === 'face') pz.face = JSON.parse(JSON.stringify(P.face.target));
     if (step === 'vault') { pz.vault = { haunted: true, boulder: true, emperor: true, seattle: true, open: true }; pz.memories = Math.max(pz.memories || 0, 99); }
     solve(s, step); ack(s, step);

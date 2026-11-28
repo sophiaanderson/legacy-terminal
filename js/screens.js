@@ -427,6 +427,10 @@
       ctx.store.save();
     }
     var decodedAll = CMDS.every(function (k) { return fri.decoded[k]; });
+    // The Game: Sat 11/28, kickoff noon Eastern (17:00 UTC), over by about 3:45pm Eastern. Brian doesn't care. Everyone else does.
+    var t = S._now ? S._now() : Date.now(), KICK = Date.UTC(2026, 10, 28, 17, 0), END = Date.UTC(2026, 10, 28, 20, 45), DAY_END = Date.UTC(2026, 10, 29, 8, 0);
+    var gd = t < KICK ? C.sat.fan.before : t < END ? C.sat.fan.during : t < DAY_END ? C.sat.fan.after : null;
+    if (gd && t > Date.UTC(2026, 10, 28, 5, 0)) root.appendChild(h('div.panel.gameday', null, h('span.data-label', null, 'MEANWHILE · THE GAME'), gd.map(ui.renderBeat)));
     root.appendChild(scene(ctx, 'sat:intro', C.scenes['sat:intro'], function (a) {
       fri.log.filter(function (e) { return e.d === 'night'; }).forEach(function (e) { a.appendChild(h('div.patch', null, e.t)); });
       a.appendChild(scene(ctx, 'sat:afterPatch', C.scenes['sat:afterPatch'], function (a2) {
@@ -436,43 +440,170 @@
       }));
     }));
 
-    // ---------- Stage 1: the wake phrase ----------
+    // ---------- Stage 1: rebuild LEGACY's Bop It (its wake phrase is a round of it) ----------
     function stageDecode(container, done) {
-      container.appendChild(h('h2', null, done ? 'STEP 1 · THE WAKE PHRASE ✓' : 'STEP 1 · WORK OUT THE WAKE PHRASE'));
-      var box = h('div');
-      container.appendChild(box);
-      CMDS.forEach(function (k, i) {
-        var bytes = P.wakeBytes[i];
-        var row = h('div.panel.wake-line');
-        row.appendChild(h('span.data-label', null, 'LINE ' + (i + 1) + ' (SCRAMBLED BY THE SUPERVISOR)'));
-        row.appendChild(h('pre.bytes', { style: 'margin:0.3rem 0 0.6rem' }, z80.formatHex(bytes)));
-        if (fri.decoded[k]) { row.appendChild(h('p', { style: 'margin:0;font-family:var(--mono);font-weight:700' }, '✓ ' + P.wakePhrase[i])); box.appendChild(row); return; }
-        var input = h('input', { type: 'text', id: 'wake-' + i, autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', 'aria-label': 'Line ' + (i + 1) + ' says' });
-        var talk = h('div', { 'aria-live': 'polite' });
-        var form = h('form.clue-form', { novalidate: true }, h('label.field', { for: 'wake-' + i, style: 'width:100%;margin:0' }, 'LINE ' + (i + 1) + ' SAYS'), input, h('button.primary', { type: 'submit' }, 'THAT’S IT'), talk);
-        form.addEventListener('submit', function (e) {
-          e.preventDefault();
-          if (!input.value.trim()) return;
-          ui.clear(talk);
-          if (P.norm(input.value) === P.norm(P.wakePhrase[i])) {
-            fri.decoded[k] = true; ctx.store.save();
-            if (CMDS.every(function (x) { return fri.decoded[x]; })) { ctx.advance(); return; }
-            ui.clear(row);
-            row.appendChild(h('span.data-label', null, 'LINE ' + (i + 1)));
-            row.appendChild(h('pre.bytes', { style: 'margin:0.3rem 0 0.6rem' }, z80.formatHex(bytes)));
-            row.appendChild(say(C.sat.decode.right[CMDS.filter(function (x) { return fri.decoded[x]; }).length - 1]));
-            row.appendChild(h('p', { style: 'margin:0;font-family:var(--mono);font-weight:700' }, '✓ ' + P.wakePhrase[i]));
+      var B = P.bop, G = C.sat.bop;
+      function bestLine() {
+        var bb = fri.bopBest || {};
+        if (!bb.bytes && !bb.lines) return '';
+        var M = B.modes.bytes, I = B.modes.lines;
+        return 'YOUR BOP IT: ' + bb.bytes + ' BYTES, ' + bb.lines + ' INSTRUCTIONS' + (bb.bytes <= M.record || bb.lines <= I.record ? ' (MY RECORD, MATCHED)' : bb.bytes <= M.slot || bb.lines <= I.slot ? ' (FITS IN MY OLD SLOT)' : '');
+      }
+      container.appendChild(h('h2', null, done ? 'STEP 1 · MY BOP IT ✓' : 'STEP 1 · REBUILD MY BOP IT'));
+      if (done) {
+        container.appendChild(h('div.panel.wake-line', null, h('span.data-label', null, 'MY WAKE PHRASE'),
+          h('p', { style: 'margin:0;font-family:var(--mono);font-weight:700' }, '✓ ' + P.wakePhrase.join(' · ')),
+          bestLine() ? h('p.muted', { style: 'margin:0.3rem 0 0' }, bestLine()) : null));
+        return;
+      }
+      container.appendChild(h('pre.readout', { role: 'note' }, G.spec));
+      // He picks how size is counted (a bonus either way): real Z80 bytes, or instructions.
+      var modeBox = h('div.actions', { role: 'group', 'aria-label': 'Count size in' }, h('span.data-label', null, 'COUNT SIZE IN:'));
+      [['bytes', 'BYTES'], ['lines', 'INSTRUCTIONS']].forEach(function (m) {
+        var b = h('button' + (mode() === m[0] ? '.primary' : ''), { type: 'button', 'aria-pressed': mode() === m[0] ? 'true' : 'false' }, m[1]);
+        b.addEventListener('click', function () { fri.bopMode = m[0]; ctx.store.save(); [].forEach.call(modeBox.querySelectorAll('button'), function (x) { var on = x === b; x.className = on ? 'primary' : ''; x.setAttribute('aria-pressed', on ? 'true' : 'false'); }); ui.clear(modeNote); modeNote.appendChild(say(sizeIntro())); });
+        modeBox.appendChild(b);
+      });
+      var modeNote = h('div', { 'aria-live': 'polite' }, say(sizeIntro()));
+      container.appendChild(modeBox);
+      container.appendChild(modeNote);
+      var ta = h('textarea.plain', { id: 'bop-src', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', wrap: 'off', 'aria-label': 'Your Bop It routine', style: 'min-height:18rem;font-family:var(--mono);white-space:pre' });
+      ta.value = fri.satSrc || B.source;
+      ta.addEventListener('input', function () { fri.satSrc = ta.value; ctx.store.save(); });
+      var qa = h('button.primary', { type: 'button' }, 'RUN ITS ACCEPTANCE TESTS');
+      var play = h('button', { type: 'button' }, '▶ PLAY A ROUND');
+      var reset = h('button.quiet', { type: 'button' }, 'START AGAIN');
+      var out = h('div', { 'aria-live': 'polite' });
+      container.appendChild(h('label.field', { for: 'bop-src' }, 'MY BOP IT'));
+      container.appendChild(ta);
+      container.appendChild(h('div.actions', null, qa, play, reset));
+      container.appendChild(out);
+      reset.addEventListener('click', function () { if (!g.confirm('Start again from the empty game?')) return; ta.value = B.source; fri.satSrc = null; ctx.store.save(); ui.clear(out); });
+
+      function mode() { return fri.bopMode === 'lines' ? 'lines' : 'bytes'; }
+      function MD() { return B.modes[mode()]; }
+      function fill(t) { var M = MD(); return String(t).replace(/\{slot\}/g, M.word[0]).replace(/\{record\}/g, M.word[1]).replace(/\{unit\}/g, M.unit.toLowerCase()); }
+      function sizeIntro() { return fill(G.size.intro); }
+      function moveName(m) { return B.names[m] || ('?' + m); }
+      function round(arr) { return arr.map(moveName).join(' ') || '(NOTHING)'; }
+      function eName(e) { return e === 0x45 ? 'E' : e ? z80.hex(e, 2) + 'h' : 'NO E'; }
+      function sizeLine(r) { var M = MD(); return 'SIZE: ' + r.bytes + ' BYTES · ' + r.instructions + ' INSTRUCTIONS   ·   ' + M.unit + ': MY OLD SLOT ' + M.slot + ' (BONUS), MY RECORD ' + M.record; }
+
+      qa.addEventListener('click', function () {
+        ui.clear(out);
+        var r = P.bopQA(ta.value);
+        if (r.error) {
+          out.appendChild(h('p', { style: 'color:var(--warn);font-family:var(--mono);white-space:pre-wrap' }, r.error));
+          if (r.endless) out.appendChild(say(G.endless));
+          fri.bopFails++; ctx.store.save();
+          if (fri.bopFails >= G.giveAfter) giveNotes(out);
+          return;
+        }
+        var list = h('div.readout-list');
+        r.results.forEach(function (x) {
+          list.appendChild(h('p', { style: 'margin:0;font-family:var(--mono);color:' + (x.pass ? 'var(--green)' : 'var(--warn)') },
+            (x.pass ? '✓ ' : '✗ ') + 'TEST ' + x.n + ': ' + x.test.name));
+          if (!x.pass) list.appendChild(h('pre.readout', null,
+            'CALLS:     ' + round(x.test.calls) + '\nMOVES:     ' + round(x.test.moves) +
+            '\nEXPECTED:  SCORE ' + x.want.score + ', ' + eName(x.want.e) + '\nYOUR GAME: SCORE ' + x.got.score + ', ' + eName(x.got.e)));
+        });
+        out.appendChild(h('p.data-label', null, 'SENTINEL ACCEPTANCE TESTING (IT CAN’T HELP ITSELF)'));
+        out.appendChild(list);
+        if (r.bytes) out.appendChild(h('p', { style: 'font-family:var(--mono)' }, sizeLine(r)));
+        if (!r.ok) {
+          out.appendChild(say(G.rules[r.rule] || G.rules.basic));
+          fri.bopFails++; ctx.store.save();
+          if (fri.bopFails >= G.giveAfter) giveNotes(out);
+          if (L.sfx) L.sfx.play('bad');
+          return;
+        }
+        // Passed. Size is a bonus: say how it did, offer to keep going or wake LEGACY now.
+        ['bytes', 'lines'].forEach(function (k) { var v = k === 'bytes' ? r.bytes : r.instructions; if (!fri.bopBest[k] || v < fri.bopBest[k]) fri.bopBest[k] = v; });
+        ctx.store.save();
+        if (L.sfx) L.sfx.play('solve');
+        out.appendChild(h('div.notice.good', { role: 'status' }, h('span.tag', null, 'ALL TESTS PASSED'), h('p', { style: 'margin:0' }, 'IT WORKS. IT REGRETS TO INFORM YOU THAT IT WORKS.')));
+        var M = MD(), n = mode() === 'bytes' ? r.bytes : r.instructions;
+        if (n < M.record) out.appendChild(say(fill(G.size.beat)));
+        else if (n === M.record) out.appendChild(say(fill(G.size.record)));
+        else if (n <= M.slot) out.appendChild(say(fill(G.size.fits)));
+        else {
+          var hs = G.size.hints;
+          out.appendChild(say(fill(hs[Math.min(fri.bopSizeHints, hs.length - 1)])));
+          fri.bopSizeHints++; ctx.store.save();
+        }
+        var wake = h('button.primary', { type: 'button' }, 'PLAY MY ROUND (WAKE ME)');
+        wake.addEventListener('click', function () { wakeRound(out, wake); });
+        out.appendChild(h('div.actions', null, wake));
+        if (n > M.record) out.appendChild(h('p.muted', null, n > M.slot ? 'Or keep shrinking it first. Up to you. It works either way.' : 'Or try for my record first. Up to you.'));
+      });
+
+      function giveNotes(where) {
+        where.appendChild(say(G.notes));
+        where.appendChild(ui.details('LEGACY’S NOTES, FROM BEFORE THE SERVICE', h('pre.readout', null, B.plain), false));
+      }
+
+      // LEGACY plays its stored round through his game: BOP IT · TWIST IT · PULL IT, then on to the filter.
+      function wakeRound(where, btn) {
+        btn.disabled = true;
+        var big = h('p.target-cmd', { 'aria-live': 'assertive', style: 'text-align:center' }, '…');
+        where.appendChild(h('div.panel.target', null, h('span.data-label', null, 'LEGACY’S ROUND, ON YOUR BOP IT'), big));
+        var i = 0;
+        (function next() {
+          if (i < P.wakePhrase.length) {
+            big.textContent = P.wakePhrase[i] + '!';
+            if (L.sfx) L.sfx.play('good');
+            i++; g.setTimeout(next, 1100);
             return;
           }
-          fri.decodeFails++; ctx.store.save();
-          var w = C.sat.decode.wrong;
-          talk.appendChild(say(fri.decodeFails >= 4 ? C.sat.decode.key : w[fri.decodeFails % w.length].replace('{n}', i + 1)));
-          input.select();
+          big.textContent = 'SCORE 3 · E';
+          if (L.sfx) L.sfx.play('unlock');
+          g.setTimeout(function () {
+            CMDS.forEach(function (k) { fri.decoded[k] = true; });
+            ctx.store.save(); ctx.advance();
+          }, 1300);
+        })();
+      }
+
+      // A live round: calls flash up, he taps (or holds still for GUM), and HIS game referees it.
+      play.addEventListener('click', function () {
+        ui.clear(out);
+        var asm = z80.assemble(ta.value, { symbols: {} });
+        if (!asm.ok) { out.appendChild(h('p', { style: 'color:var(--warn);font-family:var(--mono);white-space:pre-wrap' }, asm.errors.map(function (e) { return 'Line ' + e.line + ': ' + e.message; }).join('\n'))); return; }
+        var calls = [], moves = [];
+        var deck = [1, 2, 3, 1, 2, 3, 4];   // GUM about one call in seven
+        for (var k = 0; k < 8; k++) calls.push(deck[Math.floor(Math.random() * deck.length)]);
+        if (calls.indexOf(4) === -1) calls[2 + Math.floor(Math.random() * 5)] = 4;
+        var big = h('p.target-cmd', { 'aria-live': 'assertive', style: 'text-align:center' }, 'GET READY');
+        var pad = h('div.actions', { style: 'justify-content:center' });
+        var cur = -1, got = null;
+        [1, 2, 3].forEach(function (m) {
+          var b = h('button.primary', { type: 'button', style: 'min-width:5.5rem' }, B.names[m]);
+          b.addEventListener('click', function () { if (cur >= 0 && got === null) { got = m; big.textContent = B.names[m] + '!'; } });
+          pad.appendChild(b);
         });
-        row.appendChild(form);
-        box.appendChild(row);
+        out.appendChild(h('div.panel.target', null, h('span.data-label', null, 'BOP IT · YOUR GAME IS THE REFEREE'), big, pad,
+          h('p.muted', { style: 'margin:0.4rem 0 0;text-align:center' }, 'GUM? DO NOTHING. NEVER GUM.')));
+        play.disabled = qa.disabled = true;
+        function step() {
+          if (cur >= 0) moves.push(got === null ? 0 : got);
+          cur++; got = null;
+          if (cur >= calls.length) return finish();
+          big.textContent = B.names[calls[cur]] + ' IT';
+          if (L.sfx) L.sfx.play(calls[cur] === 4 ? 'sentinel' : 'tap');
+          g.setTimeout(step, 1500);
+        }
+        function finish() {
+          play.disabled = qa.disabled = false;
+          var mine = P.runBop(ta.value, calls, moves), ref = P.bopReferee(calls, moves);
+          big.textContent = 'ROUND OVER';
+          if (mine.error) { out.appendChild(h('p', { style: 'color:var(--warn);font-family:var(--mono);white-space:pre-wrap' }, mine.error)); return; }
+          out.appendChild(h('pre.readout', null, 'CALLS:   ' + round(calls) + '\nYOU DID: ' + round(moves) +
+            '\n\nYOUR GAME SAYS:    SCORE ' + mine.score + ', ' + eName(mine.e) + '\nITS REFEREE SAYS:  SCORE ' + ref.score + ', ' + eName(ref.e)));
+          var agree = mine.score === ref.score && mine.e === ref.e;
+          out.appendChild(say(agree ? (ref.e === 0x45 ? G.play.perfect : G.play.agree) : G.play.disagree));
+        }
+        g.setTimeout(step, 900);
       });
-      if (!done) container.appendChild(oldTerminal(ctx, null, true));
     }
 
     // ---------- Stage 2: past the filter ----------
@@ -542,23 +673,31 @@
       });
       container.appendChild(form);
       container.appendChild(result);
-      container.appendChild(oldTerminal(ctx, input));
+      container.appendChild(oldTerminal(ctx, input));       // its QA gave my XOR routine back (for the hex trick)
       container.appendChild(earlier);
       renderEarlier();
     }
     return root;
   }
 
+  // Game day (Sat 11/28): Brian and his family are Buckeyes; Sophie is Michigan. SENTINEL is, of course, Ohio State.
+  function fanEgg(out, typed) {
+    var t = String(typed || '').toUpperCase().replace(/[^A-Z]/g, ''), E = C.sat.fan;
+    var beats = t === 'GOBLUE' ? E.goBlue : (t === 'OH' || t === 'OHIO') ? E.oh : (t === 'GOBUCKS' || t === 'GOBUCKEYES') ? E.goBucks : null;
+    if (beats) beats.forEach(function (b) { out.appendChild(ui.renderBeat(b)); });
+  }
+
   function oldTerminal(ctx, msgInput, openByDefault) {
     var fri = ctx.store.state.puzzles.sat;
+    var SRC = P.scratchSource, FIELD = 'scratchSrc';
     var wrap = h('div');
     var toggle = h('button', { type: 'button', 'aria-expanded': 'false' }, 'OPEN MY OLD TERMINAL');
     var panel = h('section.panel', { hidden: !openByDefault, 'aria-label': 'LEGACY’s old terminal' });
     if (openByDefault) { toggle.textContent = 'CLOSE MY OLD TERMINAL'; toggle.setAttribute('aria-expanded', 'true'); }
     var text = h('input', { type: 'text', id: 'scratch-text', maxlength: '48', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off' });
     var ta = h('textarea.plain', { id: 'scratch-src', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', wrap: 'off', style: 'min-height:15rem;font-family:var(--mono);white-space:pre' });
-    ta.value = fri.scratchSrc || P.scratchSource;
-    ta.addEventListener('input', function () { fri.scratchSrc = ta.value; ctx.store.save(); });
+    ta.value = fri[FIELD] || SRC;
+    ta.addEventListener('input', function () { fri[FIELD] = ta.value; ctx.store.save(); });
     var out = h('div', { 'aria-live': 'polite' });
     var run = h('button.primary', { type: 'button' }, 'RUN');
     var reset = h('button.quiet', { type: 'button' }, 'RESET ROUTINE');
@@ -575,11 +714,12 @@
       toggle.setAttribute('aria-expanded', on ? 'true' : 'false');
       toggle.textContent = on ? 'CLOSE MY OLD TERMINAL' : 'OPEN MY OLD TERMINAL';
     });
-    reset.addEventListener('click', function () { ta.value = P.scratchSource; fri.scratchSrc = null; ctx.store.save(); ui.clear(out); });
+    reset.addEventListener('click', function () { ta.value = SRC; fri[FIELD] = null; ctx.store.save(); ui.clear(out); });
     run.addEventListener('click', function () {
       ui.clear(out);
       var r = P.runScratch(ta.value, text.value);
       if (r.error) { out.appendChild(h('p', { style: 'color:var(--warn);font-family:var(--mono);white-space:pre-wrap' }, r.error)); return; }
+      fanEgg(out, text.value);
       if (!r.n) { out.appendChild(say('It ran. Nothing was written to 9000h. I find that restful, but not useful.')); return; }
       out.appendChild(h('p.field', null, '9000h, ' + r.n + ' BYTE' + (r.n === 1 ? '' : 'S') + ':'));
       out.appendChild(h('p', { style: 'font-family:var(--mono);font-size:1.1rem;overflow-wrap:anywhere;margin:0' }, r.hex));

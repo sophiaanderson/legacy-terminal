@@ -450,6 +450,19 @@ ul.ways li.closed { color: var(--muted); }
 .pads.toy .pad.called.big .pad-ring { border-color: var(--hold); box-shadow: 0 0 14px var(--hold); border-width: 5px; }
 .pads.toy .pad.called.big .pad-sub { color: var(--hold); text-shadow: 0 0 8px var(--hold); }
 .pads.toy .pad.called.quiet { box-shadow: 0 0 6px var(--c), inset 0 0 12px var(--glow); }
+/* SENTINEL's fake calls get a ring too (round 4/5): bright grey with a red edge, on a real pad. Pressing it costs. */
+.pads.toy .pad.called.fake { --c: #c9ced6; --glow: rgba(255, 70, 70, 0.28); box-shadow: 0 0 16px #c9ced6, 0 0 40px rgba(255, 70, 70, 0.35), inset 0 0 26px rgba(255, 70, 70, 0.25); text-shadow: none; }
+.pads.toy .pad.called.fake .pad-ring { border-color: #c9ced6; border-width: 5px; box-shadow: 0 0 14px rgba(255, 70, 70, 0.6); }
+/* The tantrum: it rearranges the pads (colours and names stay with their move). */
+.pads.toy.swapped { grid-template-areas: "pull pull" "bop twist"; }
+.pads.toy.swapped .pad[data-move="BOP"] { width: auto; }
+.pads.toy.swapped .pad[data-move="PULL"] { width: min(50vw, 220px); }
+/* Pressed a fake: the whole screen lurches and flashes red. */
+body.fake-fail main { animation: fake-shake 0.6s cubic-bezier(.36,.07,.19,.97) both; }
+body.fake-fail::after { content: ''; position: fixed; inset: 0; pointer-events: none; background: rgba(255, 40, 40, 0.28); animation: fake-flash 0.6s ease-out forwards; z-index: 50; }
+@keyframes fake-shake { 10%, 90% { transform: translate(-3px, 1px); } 20%, 80% { transform: translate(6px, -2px); } 30%, 50%, 70% { transform: translate(-10px, 3px) rotate(-0.6deg); } 40%, 60% { transform: translate(10px, -3px) rotate(0.6deg); } }
+@keyframes fake-flash { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { body.fake-fail main { animation: none; } }
 @keyframes ring-approach { from { transform: scale(1.9); opacity: 0.1; } 70% { opacity: 0.9; } to { transform: scale(1); opacity: 1; } }
 .pads.toy .pad.down { transform: scale(0.93); opacity: 1; }
 .pads.toy .pad.held { box-shadow: 0 0 18px var(--hold), 0 0 44px rgba(255, 61, 240, 0.4); border-color: var(--hold); }

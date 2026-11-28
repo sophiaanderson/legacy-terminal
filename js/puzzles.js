@@ -463,6 +463,194 @@
     ''
   ].join('\n');
 
+  // =====================================================================
+  // SATURDAY · step 1: rebuild LEGACY's Bop It from its rules. SENTINEL deleted the game overnight ("nonessential
+  // peripheral") but kept the round: LEGACY's wake phrase is a round of Bop It (BOP, TWIST, PULL). He writes the game;
+  // SENTINEL's acceptance tests grade it by output only. Fitting it in 18 instructions is a bonus (LEGACY's record: 16).
+  // Calls at 8000h (1 BOP, 2 TWIST, 3 PULL, 4 GUM, 00h = end); moves at 8100h (same codes, 00h = did nothing).
+  // Right move = the call, except GUM: the right move is nothing. First wrong move ends it. Score → 9000h.
+  // Perfect round → 45h ('E', for Excellent) at 9001h, otherwise 00h.
+  // =====================================================================
+  var BOP = { names: ['NOTHING', 'BOP', 'TWIST', 'PULL', 'GUM'], wakeRound: [1, 2, 3],
+              // He picks how size is counted. bytes = real Z80 machine code; lines = instructions.
+              modes: { bytes: { slot: 32, record: 26, unit: 'BYTES', word: ['thirty-two', 'twenty-six'] },
+                       lines: { slot: 18, record: 16, unit: 'INSTRUCTIONS', word: ['eighteen', 'sixteen'] } } };
+  BOP.source = [
+    '; LEGACY’S BOP IT',
+    '; it deleted the game. the rules are above. build it again here.',
+    ';',
+    '; calls at 8000h. your moves at 8100h. 00h ends the calls.',
+    '; score to 9000h. 45h (E, for excellent) to 9001h if it was perfect.',
+    '; gum is 4. the right move for gum is nothing.',
+    '',
+    '        LD HL,8000h   ; the calls',
+    '        LD DE,8100h   ; the moves',
+    '',
+    '        ; your game goes here',
+    '',
+    '        RET',
+    ''
+  ].join('\n');
+  // The obvious version (22 instructions): LEGACY hands this over if he's really stuck.
+  BOP.plain = [
+    '        LD HL,8000h   ; the calls',
+    '        LD DE,8100h   ; the moves',
+    '        LD B,0        ; score',
+    'NEXT:   LD A,(HL)     ; the call',
+    '        OR A',
+    '        JR Z,PERFECT  ; 00h: end of round, nothing went wrong',
+    '        CP 4',
+    '        JR NZ,CHECK',
+    '        LD A,0        ; gum: the right move is nothing',
+    'CHECK:  LD C,A',
+    '        LD A,(DE)     ; the move',
+    '        CP C',
+    '        JR NZ,OVER    ; wrong move: round over',
+    '        INC B',
+    '        INC HL',
+    '        INC DE',
+    '        JR NEXT',
+    'PERFECT: LD A,45h     ; E',
+    '        LD (9001h),A',
+    'OVER:   LD A,B',
+    '        LD (9000h),A',
+    '        RET',
+    ''
+  ].join('\n');
+  // 18: the score is how far HL got (LD A,L), and AND 3 turns GUM (100b) into nothing while 1-3 stay put.
+  BOP.solution = [
+    '        LD HL,8000h   ; the calls',
+    '        LD DE,8100h   ; the moves',
+    'NEXT:   LD A,(HL)',
+    '        OR A',
+    '        JR Z,PERFECT',
+    '        AND 3         ; gum (4) becomes nothing (0). BOP, TWIST, PULL stay.',
+    '        LD C,A',
+    '        LD A,(DE)',
+    '        CP C',
+    '        JR NZ,OVER',
+    '        INC HL',
+    '        INC DE',
+    '        JR NEXT',
+    'PERFECT: LD A,45h',
+    '        LD (9001h),A',
+    'OVER:   LD A,L        ; the score is how far HL got',
+    '        LD (9000h),A',
+    '        RET',
+    ''
+  ].join('\n');
+  // LEGACY's record, 26 bytes / 16 instructions: the moves are exactly 100h after the calls (one pointer does both),
+  // the score is written at the top of every pass, so a miss is just RET NZ.
+  BOP.record = [
+    '        LD HL,8000h',
+    'NEXT:   LD A,L        ; the score so far is how far HL got',
+    '        LD (9000h),A',
+    '        LD A,(HL)',
+    '        OR A',
+    '        JR Z,PERFECT',
+    '        AND 3         ; gum (100b) becomes nothing',
+    '        INC H         ; 81xxh: the move for this call',
+    '        CP (HL)',
+    '        RET NZ        ; wrong move: the score is already written',
+    '        DEC H',
+    '        INC L',
+    '        JR NEXT',
+    'PERFECT: LD A,45h',
+    '        LD (9001h),A',
+    '        RET',
+    ''
+  ].join('\n');
+
+  /** Real Z80 machine-code size of an assembled program, in bytes. */
+  function codeBytes(program) {
+    var n = 0;
+    program.forEach(function (ins) {
+      var a = ins.a, b = ins.b;
+      switch (ins.op) {
+        case 'LD8':
+          if ((a && a.t === 'abs') || (b && b.t === 'abs')) n += 3;                 // LD A,(nn) / LD (nn),A
+          else if (b && b.t === 'imm') n += 2;                                       // LD r,n / LD (HL),n
+          else n += 1;                                                               // LD r,r' / (HL) / (BC) / (DE)
+          break;
+        case 'LD16': n += 3; break;
+        case 'LDSPHL': n += 1; break;
+        case 'LD16M': case 'STO16M': n += ins.r === 'HL' ? 3 : 4; break;
+        case 'ALU': n += b && b.t === 'imm' ? 2 : 1; break;
+        case 'ADD16': n += 1; break;
+        case 'ADC16': case 'SBC16': n += 2; break;
+        case 'INC8': case 'DEC8': case 'INC16': case 'DEC16': n += 1; break;
+        case 'JUMP': n += ins.m === 'JR' ? 2 : 3; break;
+        case 'CALL': n += 3; break;
+        case 'JPHL': n += 1; break;
+        case 'DJNZ': n += 2; break;
+        case 'RET': case 'PUSH': case 'POP': case 'EXDEHL': case 'EXSPHL': n += 1; break;
+        case 'BIT': case 'SET': case 'RES': case 'SHIFT': n += 2; break;
+        case 'NEG': case 'LDI': case 'LDIR': case 'LDD': case 'LDDR': case 'CPI': case 'CPIR': n += 2; break;
+        default: n += 1;                                                              // RLCA RRCA RLA RRA CPL SCF CCF NOP HALT DI EI
+      }
+    });
+    return n;
+  }
+  BOP.size = function (source) {
+    var asm = z.assemble(source, { symbols: {} });
+    return asm.ok ? { bytes: codeBytes(asm.program), instructions: asm.instructionCount } : null;
+  };
+
+  /** The referee: what a correct game writes. */
+  function bopReferee(calls, moves) {
+    var score = 0;
+    for (var i = 0; i < calls.length; i++) {
+      var want = calls[i] === 4 ? 0 : calls[i];
+      if ((moves[i] || 0) !== want) return { score: score, e: 0 };
+      score++;
+    }
+    return { score: score, e: 0x45 };
+  }
+  /** Run his game on one round. */
+  function runBop(source, calls, moves) {
+    var mem = [];
+    for (var i = 0; i < 0x200; i++) mem.push(0);
+    calls.forEach(function (c, j) { mem[j] = c; });
+    (moves || []).forEach(function (m, j) { mem[0x100 + j] = m; });
+    var env = { symbols: {}, input: { addr: 0x8000, bytes: mem }, output: { addr: 0x9000, length: 2 }, maxSteps: 8000 };
+    var asm = z.assemble(source, env);
+    if (!asm.ok) return { error: asm.errors.map(function (e) { return 'Line ' + e.line + ': ' + e.message; }).join('\n') };
+    var res = z.run(asm.program, env);
+    var size = { instructions: asm.instructionCount, bytes: codeBytes(asm.program) };
+    if (!res.ended) return { error: res.message, endless: res.status === 'limit', instructions: size.instructions, bytes: size.bytes };
+    return { score: res.output[0], e: res.output[1], instructions: size.instructions, bytes: size.bytes };
+  }
+  // SENTINEL's acceptance tests, in order. rule: what LEGACY says if this is the first one to fail.
+  var B_ = 1, T_ = 2, P_ = 3, G_ = 4;
+  var LONG100 = []; for (var li = 0; li < 100; li++) LONG100.push([B_, T_, P_, G_, T_, P_, B_][(li * 5 + (li >> 2)) % 7]);
+  BOP.tests = [
+    { calls: [B_, T_, P_], moves: [B_, T_, P_], rule: 'basic', name: 'A PERFECT ROUND' },
+    { calls: [B_, T_, P_], moves: [B_, P_, P_], rule: 'stop', name: 'A WRONG MOVE' },
+    { calls: [P_, P_, P_, P_], moves: [P_, P_, T_, P_], rule: 'stop', name: 'PLAYING ON AFTER A MISTAKE' },
+    { calls: [B_, G_, T_], moves: [B_, 0, T_], rule: 'gum', name: 'GUM, REFUSED' },
+    { calls: [B_, G_, T_], moves: [B_, G_, T_], rule: 'chew', name: 'GUM, CHEWED' },
+    { calls: [T_], moves: [0], rule: 'still', name: 'DOING NOTHING ON A TWIST' },
+    { calls: [G_, G_, G_], moves: [0, 0, 0], rule: 'gum', name: 'ALL GUM' },
+    { calls: [B_, T_, G_, P_, P_, B_, G_, T_, T_, B_, P_, G_], moves: [B_, T_, 0, P_, P_, B_, 0, T_, T_, B_, P_, 0], rule: 'long', name: 'A LONG ROUND' },
+    { calls: [B_, T_, G_, P_, P_, B_, G_, T_, T_, B_, P_, G_], moves: [B_, T_, 0, P_, P_, B_, 0, T_, B_, B_, P_, 0], rule: 'stop', name: 'A LONG ROUND, MISSED LATE' },
+    { calls: [G_], moves: [0], rule: 'gum', name: 'ONE CALL. GUM.' },
+    { calls: LONG100, moves: LONG100.map(function (c) { return c === G_ ? 0 : c; }), rule: 'long', name: 'THE LONGEST ROUND (100 CALLS)' },
+    { calls: LONG100, moves: LONG100.map(function (c, i) { return i === 98 ? (c === B_ ? T_ : B_) : (c === G_ ? 0 : c); }), rule: 'stop', name: 'THE LONGEST ROUND, MISSED AT 99' }
+  ];
+  /** Run every acceptance test. Returns { ok, instructions, results: [{ test, want, got }], fail, error, endless }. */
+  function bopQA(source) {
+    var out = { ok: true, results: [], instructions: 0 };
+    for (var i = 0; i < BOP.tests.length; i++) {
+      var t = BOP.tests[i], want = bopReferee(t.calls, t.moves), got = runBop(source, t.calls, t.moves);
+      if (got.error) { out.ok = false; out.error = got.error; out.endless = !!got.endless; out.instructions = got.instructions || 0; out.bytes = got.bytes || 0; return out; }
+      out.instructions = got.instructions; out.bytes = got.bytes;
+      var pass = got.score === want.score && got.e === want.e;
+      out.results.push({ n: i + 1, test: t, want: want, got: got, pass: pass });
+      if (!pass) { out.ok = false; out.fail = out.results[out.results.length - 1]; out.rule = (got.score === want.score) ? 'excellent' : t.rule; return out; }
+    }
+    return out;
+  }
+
   // Saturday: LEGACY's wake phrase, scrambled by SENTINEL with LEGACY'S OWN key, the mileage 23,112 = 5A48h
   // (alternating 5Ah / 48h, same as Wednesday). It didn't make a key; it filed LEGACY's and adopted it. The printed
   // migration record (cargo floor) shows 23,112 MI and "Key on file, where the supervisor can see itself".
@@ -484,10 +672,10 @@
     var asm = z.assemble(source, env);
     if (!asm.ok) return { error: asm.errors.map(function (e) { return 'Line ' + e.line + ': ' + e.message; }).join('\n') };
     var res = z.run(asm.program, env);
-    if (!res.ended) return { error: res.message };
+    if (!res.ended) return { error: res.message, endless: res.status === 'limit' || /limit/i.test(res.message || '') };
     var n = 0;
     res.writes.forEach(function (a) { if (a >= 0x9000 && a < 0x9010) n = Math.max(n, a - 0x9000 + 1); });
-    return { n: n, hex: z.formatHex(res.output.slice(0, n)), ascii: z.formatAscii(res.output.slice(0, n)), loaded: bytes.length };
+    return { n: n, bytes: res.output.slice(0, n), hex: z.formatHex(res.output.slice(0, n)), ascii: z.formatAscii(res.output.slice(0, n)), loaded: bytes.length };
   }
 
   // =====================================================================
@@ -638,6 +826,7 @@
     friWords: friWords, friWordsDone: friWordsDone, friSentence: friSentence, FRI_SLOTS: FRI_SLOTS,
     commandsIn: commandsIn,
     scratchSource: scratchSource,
+    bop: BOP, bopReferee: bopReferee, runBop: runBop, bopQA: bopQA, codeBytes: codeBytes,
     wakeKey: WAKE_KEY,
     wakePhrase: wakePhrase,
     wakeBytes: wakeBytes,

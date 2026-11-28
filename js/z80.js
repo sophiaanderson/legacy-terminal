@@ -612,7 +612,8 @@
         case 'CALL': if (cond(ins.cond)) { push16(next, ins); callDepth++; next = ins.target; } break;
         case 'RET':
           if (cond(ins.cond)) {
-            if (callDepth === 0) { status = 'ret'; break; }
+            // Top level: nothing of ours left on the stack (also after POP-ing a return address to bail out early).
+            if (callDepth === 0 || r.SP === STACK_TOP) { status = 'ret'; break; }
             callDepth--; next = pop16();
           }
           break;

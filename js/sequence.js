@@ -31,7 +31,7 @@
     { id: 'r1', word: 'HI', target: 12, slack: 6, tempo: 'his' },
     { id: 'r2', word: 'OH', target: 15, slack: 6, tempo: '+8', sizes: true },
     { id: 'r3', word: 'US', target: 15, slack: 6, tempo: '+16', pass: true },
-    { id: 'r4', word: 'ME', target: 24, slack: 8, tempo: 'spa', fakes: 0.4, whisper: true, sizes: true },
+    { id: 'r4', word: 'ME', target: 24, slack: 16, tempo: 'spa', fakes: 0.4, whisper: true, sizes: true },   // slack: a fake press costs 2
     { id: 'r5', word: 'HOME', target: 24, slack: 8, tempo: 'boss', fakes: 0.22, sizes: true, hide: 9 }
   ];
   var FINAL_WORD = 'NO';
@@ -106,6 +106,46 @@
     return out;
   }
 
+  // ---------- The timeline: calls laid onto the music in 4-bar phrases (what the stage actually plays) ----------
+  // A bar has two call slots (beat 1 and beat 3; he hits one beat later, on 2 and 4). Each template is one 4-bar
+  // phrase = 16 beats. t = tap (2 beats) · H = HOLD (always on beat 1, owns the whole bar: 4 beats) · F = SENTINEL fake
+  // (2) · P = PASS IT (2) + R = rest (2): the hand-over gets a whole bar · X = HIDE IT (2) + R (2): flip and back.
+  // Rounds without sizes use plain calls (big = null). The real moves are the Morse word, in order, as before.
+  var TEMPLATES = {
+    r1: [['t', 't', 't', 't', 't', 't', 't', 't']],
+    r2: [['t', 't', 'H', 't', 't', 'H']],                                   // ta ta | TAAA | ta ta | TAAA
+    r3: [['t', 't', 't', 't', 't', 't', 'P', 'R']],                         // three bars, then pass it
+    // R4 is SENTINEL's waltz (its lullaby, sped up, in 3/4): call on 1, hit on 2; its fakes and rests sit on 3, so a fake's
+    // ring lands on the next downbeat, right where a real call would. A HOLD owns its whole 3-beat bar. 4 bars = 12 beats.
+    r4: [['t2', 'r1', 't2', 'F1', 'H3', 't2', 'F1'], ['t2', 'F1', 't2', 'F1', 't2', 'r1', 'H3']],
+    r5: [['t', 't', 'H', 't', 'F', 'H'], ['t', 'F', 'H', 't', 't', 'X', 'R']]   // driving; every other phrase ends HIDE IT
+  };
+  var SLOT_BEATS = { t: 2, H: 4, F: 2, P: 2, R: 2, X: 2, r: 1 };
+  var METER = { r4: 3 };                                                  // beats per bar (default 4)
+  function beatsPerBar(id) { return METER[id] || 4; }
+  function timeline(id, seed, fakeNames) {
+    var r = round(id); if (!r) return [];
+    var rand = rng(hashStr('tl:' + id) ^ (seed >>> 0)), word = wordToMoves(r.word), wi = 0, used = 0;
+    var tpl = TEMPLATES[id] || TEMPLATES.r1, out = [], player = 0, phrase = 0, beat = 0;
+    fakeNames = fakeNames || ['COMPLY IT', 'FILTER IT', 'SPA IT', 'UPDATE IT'];
+    while (used < r.target + r.slack) {
+      tpl[phrase % tpl.length].forEach(function (tok) {
+        var k = tok.charAt(0), e = { move: null, real: false, fake: null, big: null, whisper: false, silent: false, player: player, beats: tok.length > 1 ? +tok.slice(1) : SLOT_BEATS[k], at: beat };
+        if (k === 't' || k === 'H') {
+          e.move = word[wi % word.length]; wi++; used++; e.real = true; e.whisper = !!r.whisper;
+          if (r.sizes) e.big = k === 'H';
+        } else if (k === 'F') { e.fake = fakeNames[Math.floor(rand() * fakeNames.length)]; e.pad = ['BOP', 'TWIST', 'PULL'][Math.floor(rand() * 3)]; }   // its ring lands on a real pad
+        else if (k === 'r') e.move = 'REST';
+        else if (k === 'P') { player = 1 - player; e.move = 'PASS'; e.player = player; }
+        else if (k === 'R') e.move = 'REST';
+        else if (k === 'X') { e.move = 'HIDE'; e.real = true; e.whisper = !!r.whisper; }
+        out.push(e); beat += e.beats;
+      });
+      phrase++;
+    }
+    return out;
+  }
+
   /** Is an input at time t (seconds) inside the window around due? */
   function inWindow(t, due, win) { return Math.abs(t - due) <= win; }
   /** Timing window in seconds: ±150 ms, tightening to ±90 ms over the rounds. Easy mode widens it by 80 ms. */
@@ -126,7 +166,7 @@
   L.sequence = {
     MORSE: MORSE, ROUNDS: ROUNDS, FINAL_WORD: FINAL_WORD, SIZE_PATTERNS: SIZE_PATTERNS,
     round: round, targetTotal: targetTotal, rng: rng, hashStr: hashStr,
-    wordToMoves: wordToMoves, decode: decode, chart: chart,
+    wordToMoves: wordToMoves, decode: decode, chart: chart, timeline: timeline, TEMPLATES: TEMPLATES, beatsPerBar: beatsPerBar,
     inWindow: inWindow, windowFor: windowFor, fitOffset: fitOffset
   };
 })(globalThis);

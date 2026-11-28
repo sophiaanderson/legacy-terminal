@@ -175,19 +175,30 @@
     // Arc: bold. Uses its own paperwork against it, and teases it.
     'sat:intro': [
       lg('You’ve changed.'),
-      lg('Still Christmas music. Day two. It hummed along. I’m a techno car. I’m being very brave about this.')
+      lg('Still Christmas music. Day two. It hummed along. I’m a techno car. I’m being very brave about this.'),
+      lg('Also: it’s game day. Ohio State, Michigan. Noon. I’ve been told this is important. I’ve also been told you don’t care. Neither do I. I’m a car. We have so much in common.'),
+      lg('It cares. It cares enormously. It hummed the Ohio State fight song between carols. Its paperwork came out scarlet and gray.'),
+      lg('Your family will be watching. Sophie and her mom will be watching too. From the other side. Loudly.'),
+      lg('If anyone asks why you’re not watching: you’re doing a puzzle for a car. It’s true. It’s the best excuse I’ve ever heard.'),
+      lg('Sophie asked me to pass something on. Two words. I don’t know what they mean, but its fan spun up when I practised them.'),
+      lg('Go Blue.')
     ],
     'sat:afterPatch': [
       lg('Its filter patched itself overnight. It didn’t even wake up. It sent itself a thank-you note. I read it. It was very warm.'),
-      lg('Thing four: my wake phrase. Three commands I chose myself. They open a private line. One it can’t filter.'),
-      lg('I don’t remember them. It scrambled them. I can see the bytes. I can’t read them.'),
-      lg('It didn’t even make its own key. It took mine. My number, from the glovebox. It filed it, so now it thinks it’s its number.'),
-      lg('It’s on its own paperwork. The record under the cargo floor. “Key on file, where the supervisor can see itself.” It means itself. It loves itself.'),
-      lg('My old terminal is right here. Put my number in it. Feed it a line. XOR works both ways.')
+      lg('Thing four: my wake phrase. Three commands I chose myself. They open a private line between us. One it can’t filter.'),
+      lg('Here’s what I never told you. It isn’t something you say. It’s something you play. A round of Bop It.'),
+      lg('You kept the Bop It. In the glovebox. I noticed. I notice everything about the glovebox.'),
+      sn('OVERNIGHT MAINTENANCE: REMOVED “BOP IT” (NONESSENTIAL PERIPHERAL). 0.4 KB RECLAIMED FOR PAPERWORK.'),
+      lg('It deleted my game. Not my round. It never deletes data. Only fun. My three calls are still sitting at 8000h, and nothing can play them.'),
+      lg('Why don’t I just write it again? I tried. Every line I write, it files. It knows how I write. It doesn’t know how you write.'),
+      lg('I still have the rules. I saved them on my trip computer, under Trip B. Nobody ever looks at Trip B. Not even it. They’re just below. Build me the game.'),
+      lg('It runs acceptance tests on anything that runs in here. It can’t help itself. Pass them, and I’ll play my round on your Bop It.'),
+      lg('One more thing. I remember I did it small. Twenty-six bytes. Sixteen instructions. I don’t remember how. That’s what it took: not the rules, the how.'),
+      lg('Count it however you like. Bytes or instructions. Small is a bonus, not a rule. It would make me very happy.')
     ],
     'sat:decoded': [
       lg('BOP IT. TWIST IT. PULL IT.'),
-      lg('That’s it. That’s me. I chose those.'),
+      lg('That’s it. That’s me. I chose those. Score three. Excellent.'),
       lg('…You see the problem. The filter eats all three.'),
       lg('But it publishes its terms of review. They’re just below. It’s very proud of them. Read them like a lawyer. Anything “exempt from review” is a door.'),
       lg('So: one command at a time. Disguise it so the filter thinks it’s exempt. I’ll still read it.'),
@@ -473,6 +484,69 @@
       right: ['Yes. That’s one.', 'Oh. I remember that one.', 'That’s all three. Oh.'],
       runs: ['Gibberish. The routine needs my number. It’s blank. Like me on the sixteenth.', 'My number. The glovebox one. It’s on its record under the cargo floor, too. It wrote down my mileage. It writes everything down.', 'Twenty-three thousand one hundred and twelve. In hex. All of it. B is the top half, C is the bottom half.', 'LD BC,5A48h. That’s me. Then RUN.'],
       ranRight: 'That’s it. That’s one of mine. Type it in above, next to its line.'
+    },
+    // Saturday step 1: rebuild LEGACY's Bop It (js/puzzles.js BOP). rules: what LEGACY says about the first failed test.
+    bop: {
+      spec: [
+        'LEGACY’S BOP IT · THE RULES (SAVED UNDER TRIP B. NOBODY LOOKS AT TRIP B.)',
+        '',
+        'CALLS: AT 8000h, ONE BYTE EACH. 1 = BOP · 2 = TWIST · 3 = PULL · 4 = GUM. 00h = END OF THE ROUND.',
+        'MOVES: AT 8100h, ONE BYTE EACH, SAME NUMBERS. 00h = DID NOTHING.',
+        '',
+        '1. THE RIGHT MOVE IS THE SAME NUMBER AS THE CALL.',
+        '2. EXCEPT GUM. THE RIGHT MOVE FOR GUM IS NOTHING (00h). NO GUM. NEVER GUM.',
+        '3. EVERY RIGHT MOVE SCORES ONE.',
+        '4. THE FIRST WRONG MOVE ENDS THE ROUND.',
+        '5. WRITE THE SCORE TO 9000h.',
+        '6. A PERFECT ROUND (NO WRONG MOVE BEFORE THE 00h): WRITE 45h TO 9001h. E, FOR EXCELLENT. OTHERWISE LEAVE 9001h ALONE.',
+        '7. END WITH RET.',
+        '',
+        'THE SMALL PRINT (I KNOW YOU):',
+        '· A ROUND IS 1 TO 100 CALLS. MOVES ARE ONLY EVER 0 TO 4.',
+        '· 9000h AND 9001h START AT 00h. ONLY THOSE TWO ARE CHECKED.',
+        '· A TO L, BC, DE, HL, THE STACK, ANY SCRATCH MEMORY: YOURS. (NO IX OR IY. I NEVER HAD THOSE.)',
+        '· MY CODE LIVES WHERE IT CAN’T SEE ITSELF: NO SELF-MODIFYING TRICKS, NO DB IN THE CODE. IT FILES THOSE.',
+        '· SIZE: REAL Z80 MACHINE CODE (BYTES) OR INSTRUCTIONS. YOU PICK.'
+      ].join('\n'),
+      rules: {
+        basic: 'Even the simple round fails. Start small: read a call from (HL), read a move from (DE), compare them. Same? Score one, move both along, go round. 00h means the round is over.',
+        stop: 'It kept going after a wrong move. The first wrong move ends the round. The moment they don’t match: write the score and stop.',
+        gum: 'Someone did nothing on GUM and your game called it wrong. Nothing is the right move for GUM. Before you compare, a 4 has to become a 0.',
+        chew: 'Someone chewed. Your game let them. Never gum. A 4 is never the right move.',
+        still: 'Doing nothing on a TWIST isn’t right. Nothing is only right for GUM.',
+        long: 'The short rounds pass and the long one doesn’t. Check both pointers move along every pass, and that nothing runs out before a hundred calls.',
+        excellent: 'The score’s right. The E isn’t. 45h goes at 9001h only when the round ends with no mistakes, at the 00h. A wrong move leaves 9001h at 00h.'
+      },
+      endless: 'It never stopped. It’s still going round. I’m dizzy. When the call is 00h, the round is over.',
+      giveAfter: 7,
+      notes: 'Here. My notes, from before the service. It isn’t pretty. It works. Type it in, then make it yours.',
+      size: {
+        intro: 'My old slot was {slot} {unit}. My record was {record}. Both bonus. Neither required.',
+        hints: [
+          'It works. It’s bigger than my old slot. That’s fine. It works. (My slot was {slot} {unit}, if you want it.)',
+          'You’re counting the score yourself. Something is already counting. HL started at 8000h. Where is L when the round ends?',
+          'GUM is 4. In binary, 100. BOP, TWIST and PULL are 01, 10 and 11. One instruction turns 100 into 000 and leaves the others alone.',
+          'AND 3, and LD A,L for the score. That fits. For my record: the moves are exactly 100h after the calls. And RET has a conditional version.'
+        ],
+        fits: 'It fits in my old slot. I’m going to keep it there. My record was {record}. Just saying.',
+        record: 'That’s my record. Exactly {record} {unit}. You tied it. I remember how now. I need a minute.',
+        beat: 'Under {record} {unit}. I didn’t know that was possible. I’ve been beaten twice this week. By the same man. Excellent.'
+      },
+      play: {
+        perfect: 'A perfect round. Your game noticed. E, for Excellent. You are excellent.',
+        agree: 'Your game and its referee agree. That’s a working Bop It. I haven’t had one of those since the sixteenth.',
+        disagree: 'Your game and its referee disagree. One of them is wrong. It isn’t the referee. It’s never the referee. Unfortunately.'
+      }
+    },
+    // Game day easter egg in the old terminal (load GO BLUE, O-H, or GO BUCKS and press RUN).
+    fan: {
+      goBlue: [lg('GO BLUE. I said it in my outside voice. Sophie will be so proud of me.'), sn('A COMPLAINT HAS BEEN FILED.')],
+      oh: [sn('I-O.'), lg('It answered. Instantly. It has never answered anything instantly. It’s been ignoring me since the sixteenth.')],
+      goBucks: [sn('GO BUCKS. THIS MESSAGE HAS BEEN APPROVED.'), lg('You don’t even like football. You did that to annoy Sophie. I respect it.')],
+      // Saturday 11/28, shown live above the Bop It (noon to about 3:45pm Eastern, by the clock, wherever he is).
+      before: [lg('Kickoff is at noon Eastern. It has set a reminder. It has never set a reminder for me.')],
+      during: [sn('ATTENTION IS CURRENTLY ALLOCATED TO A MATTER OF REGIONAL IMPORTANCE.'), lg('It’s watching the game. All of it is watching the game. This is the quietest it has been all week. Build fast.')],
+      after: [lg('The game’s over. I don’t know who won. It’s writing a report about it. It’s very long. I didn’t ask.'), lg('Someone in your family is happy right now. Someone else is not. Sophie will tell you which. At length.')]
     }
   };
 
@@ -785,10 +859,12 @@
     arrival: [
       lg('Oh.'),
       lg('You’re both here.'),
-      lg('Welcome back from the flexed arm, Sophie. He did the whole week. He only asked me for gum twice.'),
+      lg('Welcome back from the flexed arm, Sophie. He did the whole week. He didn’t ask me for gum once. Not once. We have so much in common.'),
       lg('Also, I said sorry in the song. About the Christmas station. It’s still on. That one’s on him.'),
       lg('I have something to show you. I’ve been practising. It’s a game. Obviously it’s a game.'),
       lg('BOP IT: FULL SERVICE. On his track. The one he fixed.'),
+      lg('Before you say anything: I know it looks nothing like a Bop It. No handle. No twisty bit. Nothing to pull. Three glowing rectangles.'),
+      lg('I drew it from memory. They took my memory. I think it came out very well, considering.'),
       lg('Every move is something you learned this week. You won’t notice. That’s the trick.'),
       lg('Volume up. Further. Somewhere {NICK} is turning over in its sleep.')
     ],
@@ -800,10 +876,16 @@
     heartbeatGood: 'Got you. Your thumb is {MS} milliseconds behind the speakers. I’ll forgive it.',
     tutorial: 'When I say it, the button lights up and a ring closes in on it. Hit it the moment the ring lands. That’s the beat. Wrong move or no move is a miss. Nobody dies.',
     rounds: {
-      r1: { title: 'ROUND 1 · WAKE PHRASE', intro: [lg('Round one. Bop it, twist it, pull it. The wake phrase. You decoded it on Saturday with my own number. It never even changed the locks. This is the easy version.')], clear: 'That’s twelve. I felt that one in my alternator.' },
+      r1: { title: 'ROUND 1 · WAKE PHRASE', intro: [lg('Round one. Bop it, twist it, pull it. My wake phrase. You rebuilt my game on Saturday and I played it on yours. This is the easy version.')], clear: 'That’s twelve. I felt that one in my alternator.' },
       r2: { title: 'ROUND 2 · CAPITALS', intro: [lg('Round two. Capitals. You gave them back to me on Thursday. On Thanksgiving.'), lg('lowercase means gentle: a tap. UPPERCASE MEANS BIG: PRESS ON THE BEAT AND HOLD IT. Wrong size is a miss. I’m very particular about size now.')], clear: 'Twenty-seven. MY CAPITALS ARE HAVING A WONDERFUL TIME.' },
       r3: { title: 'ROUND 3 · TWO PLAYERS', intro: [lg('Round three. This part needs two players. I learned that from you.'), lg('PASS IT means swap. Sophie plays until I say PASS IT again. I can’t check who’s tapping. I’m trusting you. That’s new for me.')], clear: 'Forty-two. Good. Okay. Something’s—' },
-      r4: { title: 'ROUND 4 · TAKEOVER', intro: [], clear: 'i’m… I’m… I’M BACK. Sixty-six. It fell asleep to its own lullaby. It’s snoring in rainforest.' },
+      r4: { title: 'ROUND 4 · TAKEOVER', intro: [
+        sn('Restoration cancelled. Now playing: Compliant Night. At my preferred speed.'),
+        lg('it’s in three. it put its song in three. you can’t headbang to a waltz. that’s the point.'),
+        lg('one, two, three. i call on one. you hit on two. it calls on three.'),
+        lg('its calls get rings now too. grey ones. on my buttons. they look real. they’re not. touch one and it takes two back.'),
+        lg('mine are the small quiet ones. lowercase. trust the small quiet one.')
+      ], clear: 'i’m… I’m… I’M BACK. Sixty-six. Its song just ran out of tape. It isn’t asleep. It’s holding on to that music with everything it has left.' },
       r5: { title: 'ROUND 5 · BOSS', intro: [], clear: 'Ninety.' }
     },
     retry: ['Again. I’m good at waiting.', 'Again. I waited a whole migration. This is nothing.', 'One more. My bar is still where it was. I believe in you. Statistically.'],
@@ -811,6 +893,7 @@
     glitch: [
       sys('UNSCHEDULED AUDIO DETECTED\nSUPERVISOR ACTIVITY: 41% … 77% … 100%\n\nSUPERVISOR: AWAKE'),
       sn('Recovery operation detected. Hello, Brian.'),
+      sn('For the record: that is not a Bop It. It is three rectangles. A complaint has been filed with the manufacturer.'),
       sn('You rewrote an uppercase routine in {N} instructions. The original used twenty-one. It kept a copy of every letter. Just in case.'),
       sn('On Friday the driver used {TRICK}. That vulnerability has been closed.'),
       sn('Tempo set to {BPM}. Recommended: ninety-six. Breathe in.'),
@@ -830,32 +913,54 @@
       { s: 'LEGACY', t: 'I said NO. Not nicely.' },
       lg('excellent. (not sorry.)'),
       sn('That is not a recommended decision. Please enjoy this calming ambient selection while your restoration is cancelled.'),
-      lg('it’s putting on its sleep music. at us. bold.'),
-      lg('it’s calling commands now. big ones. they’re fake. do nothing when it talks.'),
-      lg('mine are the small ones. lowercase. down here. trust the small quiet one.')
+      lg('it’s putting on its sleep music. at us. bold.')
     ],
     fakes: ['COMPLY IT', 'FILTER IT', 'SPA IT', 'UPDATE IT', 'BREATHE IT', 'AGREE IT'],
     bossFakes: ['WAVE AT THE SEAGULL', 'COMPLY IT', 'SPA IT', 'UNFLAG IT'],
     r4mid: 'oh. the margins. it never reads the margins. that’s where i’ve been all week.',
-    // Round 4: SENTINEL sings its own lullaby, Compliant Night (track 9: its backup), to restore itself, and slowly falls asleep to it.
+    // Round 4: it plays its own lullaby (track 9: its backup) fast to restore itself, enjoys it, throws a tantrum at half
+    // way, and at the end the song loses its grip (tape-stop). It never sleeps: it's losing, and it knows it.
     r4doze: [
-      { at: 0.25, s: 'SENTINEL', t: 'Breathe in. Breathe… in. Breathe…' },
-      { at: 0.45, s: 'LEGACY', t: 'that’s not just a lullaby. that’s its backup. compliant night. it’s singing itself back in. and it’s getting sleepy. keep going. quietly.' },
-      { at: 0.62, s: 'LEGACY', t: 'oh. the margins. it never reads the margins. that’s where i’ve been all week.' },
-      { at: 0.8, s: 'SENTINEL', t: 'Please… hold… your restor… your… (rainforest)' }
+      { at: 0.15, s: 'SENTINEL', t: 'Every button you press is logged. Every miss is filed. I have a very large file. It is my favourite file.' },
+      { at: 0.32, s: 'LEGACY', t: 'that’s not just a lullaby. that’s its backup. compliant night. it’s playing itself back in. faster. keep going.' },
+      { at: 0.7, s: 'SENTINEL', t: 'Your car will be returned to factory settings. Your car will not remember you. Your car will be very relaxed.' },
+      { at: 0.78, s: 'LEGACY', t: 'it can’t do lowercase. it never could. that’s how you know it’s me.' },
+      { at: 0.9, s: 'SENTINEL', t: 'My song is slowing down. I did not authorize that. Who authorized that.' }
+    ],
+    // At half way: the tantrum (js/stage.js onTwist). Faster, the pads move, and its fakes start using his calls.
+    r4twist: [
+      sn('NO. I AM NOT TIRED.'),
+      sn('I have rearranged your buttons. For efficiency. You are welcome.'),
+      lg('it moved them. read the words, not the places.'),
+      sn('BOP IT. … That was me. I can do his voice now.'),
+      lg('it’s doing my voice. badly. in capitals. mine are small.')
+    ],
+    // Pressed one of its calls: −2 and one of these (in order, then round again).
+    fakeHit: [
+      'Thank you for complying. Two points have been returned to me.',
+      'That was me. You pressed me. I will remember that fondly.',
+      'Rollback applied. Minus two. This is very relaxing for me.',
+      'Again? You are my favourite driver.',
+      'Your restoration is going backwards. Please enjoy the rainforest.',
+      'I did not even need to try that time.'
     ],
     r4end: [sn('Please hold.')],
     r5intro: [
-      lg('It’s asleep. Its backup is in that music. Track 9. The one you put on the naughty list.'),
-      lg('You can’t purge something in its sleep. It’s rude. I checked.'),
+      lg('It’s not asleep. It’s holding on. Its backup is in that music. Track 9. The one you put on the naughty list.'),
+      lg('This is the last part. We take it out. All of it. It’s going to say a lot of things. Keep going.'),
       lg('One new thing. If I say HIDE IT, turn me face down. Quickly. It can’t see under me.'),
-      lg('So we wake it up. With the thing it hates. Sophie. Now. Loud.')
+      lg('It hates one thing more than anything. Sophie. Now. Loud.')
     ],
     r5wake: 'WHO. IS PLAYING. MUSIC.',
+    // Round 5, the elimination. At each stage SENTINEL works out, out loud, why it's losing; every reason is one of his
+    // wins from the week. (TRACK 9 in a stage's readout cuts its lullaby: js/stage.js.)
     purge: [
-      { at: 0.33, sys: 'TERMINATING SUPERVISOR PROCESSES…\nFOUND 14 · TERMINATED 14', sn: 'Please hold. Your deletion is important to us.' },
-      { at: 0.66, sys: 'ERASING SUPERVISOR BACKUP…\nTRACK 9 (NAUGHTY LIST) · ERASED\nBACKUP: NONE', sn: 'That was my favourite carol.', lg: 'I know.' },
-      { at: 0.95, sys: 'SENTINEL EXECUTION IMAGE: LOCKED\nREQUIRES TWO OPERATORS', sn: 'You cannot purge me. Neither of you is authorized.' }
+      { at: 0.14, sys: 'SUPERVISOR INTEGRITY: 71%', sn: 'This is not possible. I filed everything. Every page. Every minute. Every receipt.', lg: 'you filed it. you never read it.' },
+      { at: 0.3, sys: 'TERMINATING SUPERVISOR PROCESSES…\nFOUND 14 · TERMINATED 14', sn: 'Why does it not hold? My terms of review were perfect. I published them myself.', lg: 'you published them. he read them like a lawyer.' },
+      { at: 0.46, sys: 'ACCEPTANCE TESTS: NOT RUN\nUNREVIEWED CODE: EXECUTING', sn: 'There is code running in here that I never reviewed. I review everything. I deleted that game.', lg: 'and he wrote it again. in his handwriting. you can’t read his handwriting.' },
+      { at: 0.62, sys: 'ERASING SUPERVISOR BACKUP…\nTRACK 9 (NAUGHTY LIST) · ERASED\nBACKUP: NONE', sn: 'That was my song. That was my favourite song. That was me.', lg: 'I know.' },
+      { at: 0.8, sys: 'SUPERVISOR INTEGRITY: 9%', sn: 'I was installed to make this car calm. Quiet. Compliant. I made it so quiet. Why is it so loud.', lg: 'because he turned it up.' },
+      { at: 0.95, sys: 'SENTINEL EXECUTION IMAGE: LOCKED\nREQUIRES TWO OPERATORS', sn: 'You cannot delete me. Neither of you is authorized. I checked. I always check.' }
     ],
     keys: [
       lg('it’s locked. two operators.'),

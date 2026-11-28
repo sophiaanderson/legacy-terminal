@@ -102,7 +102,8 @@
     var freq = A1 * 4 * Math.pow(2, (semi - 12) / 12);   // A3 and up
     var f = ac.createBiquadFilter(), gn = ac.createGain();
     f.type = 'lowpass'; f.Q.value = 4; f.frequency.setValueAtTime(4200, t); f.frequency.exponentialRampToValueAtTime(700, t + STEP * 1.6);
-    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.16, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.001, t + STEP * 1.7);
+    var lg = 0.16 * ((listeners && listeners.leadGain) || 1);   // the finale brings his melody forward
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(lg, t + 0.01); gn.gain.exponentialRampToValueAtTime(0.001, t + STEP * 1.7);
     f.connect(gn).connect(beatBus);
     [-7, 0, 7].forEach(function (cents) {           // a little supersaw: three detuned saws
       var o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq; o.detune.value = cents;
@@ -410,6 +411,48 @@
     }).catch(function () { return false; });
   }
 
+  /** Finale Round 4: SENTINEL's lullaby ("Compliant Night", the instrumental loop: 40 bars of 3/4 at 81 BPM, starting on
+   *  a downbeat) as the round's backing, played FAST. onStep(t, step 0..5, bar, STEP) on eighth notes, 6 per bar.
+   *  setRate(r) changes speed (and pitch) on the next downbeat, exactly, so the calls stay locked to the music.
+   *  tapeStop(sec): the slowdown-to-nothing when it loses. Returns null if the recording isn't decoded yet. */
+  var NIGHT_BPM = 81;
+  function lullaby(opts) {
+    opts = opts || {};
+    if (!ensure()) return null;
+    var buf = buffers['night:loop'];
+    if (!buf) { preloadNight(); return null; }
+    stop();
+    playing = true; mode = 'song'; listeners = opts;
+    var src = ac.createBufferSource(), gn = ac.createGain();
+    src.buffer = buf; src.loop = true; gn.gain.value = opts.level == null ? 1 : opts.level; src.connect(gn).connect(master);
+    var rate = opts.rate || 1, pending = null, t0 = ac.currentTime + 0.15, t = t0, si = 0, bar = 0;
+    src.playbackRate.setValueAtTime(rate, t0);
+    src.start(t0, 0); songSrc = src;
+    timer = g.setInterval(function () {
+      if (!ac || !playing) return;
+      while (t < ac.currentTime + 0.2) {
+        if (si === 0 && pending) { rate = pending; pending = null; src.playbackRate.setValueAtTime(rate, t); }
+        var st = 60 / (NIGHT_BPM * rate) / 2;
+        if (listeners && listeners.onStep) { try { listeners.onStep(t, si, bar, st); } catch (e) {} }
+        si++; if (si === 6) { si = 0; bar++; } t += st;
+      }
+    }, 40);
+    return {
+      rate: function () { return pending || rate; },
+      bpm: function () { return NIGHT_BPM * (pending || rate); },
+      setRate: function (r) { pending = Math.max(0.5, Math.min(2, r)); },
+      tapeStop: function (sec) {
+        if (songSrc !== src) return;
+        var now = ac.currentTime, d = sec || 1.6;
+        g.clearInterval(timer); timer = 0;
+        src.playbackRate.cancelScheduledValues(now); src.playbackRate.setValueAtTime(src.playbackRate.value || rate, now);
+        src.playbackRate.exponentialRampToValueAtTime(0.06, now + d);
+        gn.gain.setValueAtTime(gn.gain.value, now + d * 0.6); gn.gain.exponentialRampToValueAtTime(0.0001, now + d);
+        g.setTimeout(function () { if (songSrc === src) { try { src.stop(); } catch (e) {} songSrc = null; playing = false; } }, d * 1000 + 80);
+      }
+    };
+  }
+
   function stop() {
     playing = false; mode = null;
     if (songSrc) { try { songSrc.stop(); } catch (e) {} songSrc = null; }
@@ -619,7 +662,7 @@
   L.mix = { BPM: BPM, glitch: glitch, loopBeat: loopBeat, playTrack: playTrack, stop: stop, preload: preload,
             spa: spa, spaStop: spaStop, spaLevel: spaLevel, preloadNight: preloadNight,
             carol: carol, carolStop: carolStop, carolPlaying: function () { return !!carolState; },
-            accent: accent,
+            accent: accent, lullaby: lullaby, preloadNight: preloadNight, nightReady: function () { return !!(buffers && buffers['night:loop']); },
             /** The shared AudioContext and its output (the finale's call sounds use the same clock). */
             ctx: function () { return ensure() ? ac : null; }, out: function () { return comp; },
             /** Play a loaded voice clip now (e.g. the "I said no." chop). */

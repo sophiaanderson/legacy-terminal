@@ -32,9 +32,12 @@
     { id: 'r2', word: 'OH', target: 15, slack: 6, tempo: '+8', sizes: true },
     { id: 'r3', word: 'US', target: 15, slack: 6, tempo: '+16', pass: true },
     { id: 'r4', word: 'ME', target: 24, slack: 16, tempo: 'spa', fakes: 0.4, whisper: true, sizes: true },   // slack: a fake press costs 2
-    { id: 'r5', word: 'HOME', target: 24, slack: 8, tempo: 'boss', fakes: 0.22, sizes: true, hide: 9 }
+    // R5 spells the OVERRIDE word (stored as Morse so it isn't readable at a glance; the organizer doesn't know it either).
+    { id: 'r5', morse: '-... -.-- .', target: 24, slack: 8, tempo: 'boss', fakes: 0.22, sizes: true, hide: 9 }
   ];
+  ROUNDS.forEach(function (r) { if (r.morse && !r.word) r.word = r.morse.split(' ').map(function (c) { for (var k in MORSE) if (MORSE[k] === c) return k; return '?'; }).join(''); });
   var FINAL_WORD = 'NO';
+  function overrideWord() { return round('r5').word; }
   // Holds come in rhythmic phrases, not coin flips (false = tap, true = HOLD). A HOLD takes a whole bar (js/stage.js),
   // so these read as "ta · TAAA · · · ta · ta" against the music. Every pattern starts tap, HOLD (to teach it).
   var SIZE_PATTERNS = {
@@ -115,13 +118,14 @@
     r1: [['t', 't', 't', 't', 't', 't', 't', 't']],
     r2: [['t', 't', 'H', 't', 't', 'H']],                                   // ta ta | TAAA | ta ta | TAAA
     r3: [['t', 't', 't', 't', 't', 't', 'P', 'R']],                         // three bars, then pass it
-    // R4 is SENTINEL's waltz (its lullaby, sped up, in 3/4): call on 1, hit on 2; its fakes and rests sit on 3, so a fake's
-    // ring lands on the next downbeat, right where a real call would. A HOLD owns its whole 3-beat bar. 4 bars = 12 beats.
+    // R4 is SENTINEL's song alone (Compliant Night, a waltz in 3/4, sped up to his tempo): call on 1, hit on 2; its fakes
+    // and rests sit on 3, so a fake's ring lands on the next downbeat, right where a real call would. A HOLD owns its
+    // whole 3-beat bar. 4 bars = 12 beats.
     r4: [['t2', 'r1', 't2', 'F1', 'H3', 't2', 'F1'], ['t2', 'F1', 't2', 'F1', 't2', 'r1', 'H3']],
-    r5: [['t', 't', 'H', 't', 'F', 'H'], ['t', 'F', 'H', 't', 't', 'X', 'R']]   // driving; every other phrase ends HIDE IT
+    r5: [['t', 't', 'H', 't', 'F', 'H'], ['t', 'F', 'H', 't', 't', 'F', 'A']]   // driving; every other phrase ends EVERYTHING (all three at once)
   };
-  var SLOT_BEATS = { t: 2, H: 4, F: 2, P: 2, R: 2, X: 2, r: 1 };
-  var METER = { r4: 3 };                                                  // beats per bar (default 4)
+  var SLOT_BEATS = { t: 2, H: 4, F: 2, P: 2, R: 2, X: 2, r: 1, A: 2 };
+  var METER = { r4: 3 };                                                  // beats per bar (default 4): R4 is a waltz
   function beatsPerBar(id) { return METER[id] || 4; }
   function timeline(id, seed, fakeNames) {
     var r = round(id); if (!r) return [];
@@ -136,6 +140,7 @@
           if (r.sizes) e.big = k === 'H';
         } else if (k === 'F') { e.fake = fakeNames[Math.floor(rand() * fakeNames.length)]; e.pad = ['BOP', 'TWIST', 'PULL'][Math.floor(rand() * 3)]; }   // its ring lands on a real pad
         else if (k === 'r') e.move = 'REST';
+        else if (k === 'A') { e.move = 'ALL'; e.real = true; }        // EVERYTHING: all three pads at once (not Morse)
         else if (k === 'P') { player = 1 - player; e.move = 'PASS'; e.player = player; }
         else if (k === 'R') e.move = 'REST';
         else if (k === 'X') { e.move = 'HIDE'; e.real = true; e.whisper = !!r.whisper; }
@@ -164,7 +169,7 @@
   }
 
   L.sequence = {
-    MORSE: MORSE, ROUNDS: ROUNDS, FINAL_WORD: FINAL_WORD, SIZE_PATTERNS: SIZE_PATTERNS,
+    MORSE: MORSE, ROUNDS: ROUNDS, FINAL_WORD: FINAL_WORD, overrideWord: overrideWord, SIZE_PATTERNS: SIZE_PATTERNS,
     round: round, targetTotal: targetTotal, rng: rng, hashStr: hashStr,
     wordToMoves: wordToMoves, decode: decode, chart: chart, timeline: timeline, TEMPLATES: TEMPLATES, beatsPerBar: beatsPerBar,
     inWindow: inWindow, windowFor: windowFor, fitOffset: fitOffset

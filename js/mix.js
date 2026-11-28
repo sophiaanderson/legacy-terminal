@@ -423,11 +423,14 @@
     if (!buf) { preloadNight(); return null; }
     stop();
     playing = true; mode = 'song'; listeners = opts;
-    var src = ac.createBufferSource(), gn = ac.createGain();
-    src.buffer = buf; src.loop = true; gn.gain.value = opts.level == null ? 1 : opts.level; src.connect(gn).connect(master);
-    var rate = opts.rate || 1, pending = null, t0 = ac.currentTime + 0.15, t = t0, si = 0, bar = 0;
+    var src = ac.createBufferSource(), gn = ac.createGain(), shaper = ac.createWaveShaper(), lp = ac.createBiquadFilter();
+    src.buffer = buf; src.loop = true; gn.gain.value = opts.level == null ? 1 : opts.level;
+    shaper.curve = shapeCurve(0); shaper.oversample = '2x'; lp.type = 'lowpass'; lp.frequency.value = 12000; lp.Q.value = 7;
+    src.connect(shaper).connect(lp).connect(gn).connect(master);   // it's dying: decay() dirties this chain
+    var lfo = ac.createOscillator(), depth = ac.createGain(); lfo.frequency.value = 0.7; depth.gain.value = 0; lfo.connect(depth).connect(src.playbackRate);
+    var rate = opts.rate || 1, pending = null, t0 = ac.currentTime + 0.15, t = t0, si = 0, bar = 0, lastK = -1;
     src.playbackRate.setValueAtTime(rate, t0);
-    src.start(t0, 0); songSrc = src;
+    src.start(t0, 0); lfo.start(t0); songSrc = src; mashSources.push(lfo);
     timer = g.setInterval(function () {
       if (!ac || !playing) return;
       while (t < ac.currentTime + 0.2) {
@@ -441,10 +444,19 @@
       rate: function () { return pending || rate; },
       bpm: function () { return NIGHT_BPM * (pending || rate); },
       setRate: function (r) { pending = Math.max(0.5, Math.min(2, r)); },
+      /** 0..1: how close it is to dying. Distortion, a closing resonant filter, a faster, sicker warble in its pitch. */
+      decay: function (x) {
+        var k = Math.round(Math.max(0, Math.min(1, x)) * 10) / 10, now = ac.currentTime;
+        if (k === lastK) return; lastK = k;
+        shaper.curve = shapeCurve(k * k);
+        lp.frequency.setTargetAtTime(12000 - k * 9800, now, 0.4);
+        depth.gain.setTargetAtTime(rate * 0.03 * k, now, 0.4);
+        lfo.frequency.setTargetAtTime(0.7 + k * 3.3, now, 0.6);
+      },
       tapeStop: function (sec) {
         if (songSrc !== src) return;
         var now = ac.currentTime, d = sec || 1.6;
-        g.clearInterval(timer); timer = 0;
+        g.clearInterval(timer); timer = 0; depth.gain.cancelScheduledValues(now); depth.gain.setValueAtTime(0, now);
         src.playbackRate.cancelScheduledValues(now); src.playbackRate.setValueAtTime(src.playbackRate.value || rate, now);
         src.playbackRate.exponentialRampToValueAtTime(0.06, now + d);
         gn.gain.setValueAtTime(gn.gain.value, now + d * 0.6); gn.gain.exponentialRampToValueAtTime(0.0001, now + d);
@@ -453,6 +465,12 @@
     };
   }
 
+  /** A soft-clip curve for the dying lullaby: k 0 (clean) … 1 (wrecked). */
+  function shapeCurve(k) {
+    var n = 2048, c = new Float32Array(n), a = 1 + k * 80;
+    for (var i = 0; i < n; i++) { var x = i * 2 / n - 1; c[i] = (1 + a) * x / (1 + a * Math.abs(x)) * (1 / (1 + k * 0.6)); }
+    return c;
+  }
   function stop() {
     playing = false; mode = null;
     if (songSrc) { try { songSrc.stop(); } catch (e) {} songSrc = null; }

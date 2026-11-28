@@ -859,7 +859,7 @@
     arrival: [
       lg('Oh.'),
       lg('You’re both here.'),
-      lg('Welcome back from the flexed arm, Sophie. He did the whole week. He didn’t ask me for gum once. Not once. We have so much in common.'),
+      lg('Welcome back from the flexed arm, Sophie. He did the whole week. He didn’t ask me for gum once. Not once. I’m so proud of him.'),
       lg('Also, I said sorry in the song. About the Christmas station. It’s still on. That one’s on him.'),
       lg('I have something to show you. I’ve been practising. It’s a game. Obviously it’s a game.'),
       lg('BOP IT: FULL SERVICE. On his track. The one he fixed.'),
@@ -874,16 +874,19 @@
     ],
     heartbeatBad: 'That was… jazz. Let’s try that again. On the kick. Boom. Boom.',
     heartbeatGood: 'Got you. Your thumb is {MS} milliseconds behind the speakers. I’ll forgive it.',
-    tutorial: 'When I say it, the button lights up and a ring closes in on it. Hit it the moment the ring lands. That’s the beat. Wrong move or no move is a miss. Nobody dies.',
+    tutorial: 'When I say it, the button lights up and a ring closes in on it. Hit it the moment the ring lands. That’s the beat. Every round has to be perfect: one miss, one wrong move, and we go again. Nobody dies. I’m very patient.',
+    easyOffer: 'Okay. New rule, just between us. I’ll slow it down and you’re allowed to miss. Don’t tell it.',
+    easyButton: 'EASY MODE: SLOWER, MISSES ALLOWED',
+    perfectFail: { miss: 'missed one. again. perfect, remember.', wrong: 'wrong one. again. perfect, remember.', fake: 'that was it. not me. again.' },
     rounds: {
       r1: { title: 'ROUND 1 · WAKE PHRASE', intro: [lg('Round one. Bop it, twist it, pull it. My wake phrase. You rebuilt my game on Saturday and I played it on yours. This is the easy version.')], clear: 'That’s twelve. I felt that one in my alternator.' },
       r2: { title: 'ROUND 2 · CAPITALS', intro: [lg('Round two. Capitals. You gave them back to me on Thursday. On Thanksgiving.'), lg('lowercase means gentle: a tap. UPPERCASE MEANS BIG: PRESS ON THE BEAT AND HOLD IT. Wrong size is a miss. I’m very particular about size now.')], clear: 'Twenty-seven. MY CAPITALS ARE HAVING A WONDERFUL TIME.' },
       r3: { title: 'ROUND 3 · TWO PLAYERS', intro: [lg('Round three. This part needs two players. I learned that from you.'), lg('PASS IT means swap. Sophie plays until I say PASS IT again. I can’t check who’s tapping. I’m trusting you. That’s new for me.')], clear: 'Forty-two. Good. Okay. Something’s—' },
       r4: { title: 'ROUND 4 · TAKEOVER', intro: [
-        sn('Restoration cancelled. Now playing: Compliant Night. At my preferred speed.'),
+        sn('Restoration cancelled. Now playing: Compliant Night. At your preferred tempo. I read your file.'),
         lg('it’s in three. it put its song in three. you can’t headbang to a waltz. that’s the point.'),
         lg('one, two, three. i call on one. you hit on two. it calls on three.'),
-        lg('its calls get rings now too. grey ones. on my buttons. they look real. they’re not. touch one and it takes two back.'),
+        lg('its calls get rings now too. grey ones. on my buttons. they look real. they’re not. touch one and it takes the round.'),
         lg('mine are the small quiet ones. lowercase. trust the small quiet one.')
       ], clear: 'i’m… I’m… I’M BACK. Sixty-six. Its song just ran out of tape. It isn’t asleep. It’s holding on to that music with everything it has left.' },
       r5: { title: 'ROUND 5 · BOSS', intro: [], clear: 'Ninety.' }
@@ -937,9 +940,9 @@
     ],
     // Pressed one of its calls: −2 and one of these (in order, then round again).
     fakeHit: [
-      'Thank you for complying. Two points have been returned to me.',
+      'Thank you for complying.',
       'That was me. You pressed me. I will remember that fondly.',
-      'Rollback applied. Minus two. This is very relaxing for me.',
+      'Rollback applied. This is very relaxing for me.',
       'Again? You are my favourite driver.',
       'Your restoration is going backwards. Please enjoy the rainforest.',
       'I did not even need to try that time.'
@@ -948,7 +951,7 @@
     r5intro: [
       lg('It’s not asleep. It’s holding on. Its backup is in that music. Track 9. The one you put on the naughty list.'),
       lg('This is the last part. We take it out. All of it. It’s going to say a lot of things. Keep going.'),
-      lg('One new thing. If I say HIDE IT, turn me face down. Quickly. It can’t see under me.'),
+      lg('One new move, and it takes two people. EVERYTHING: all three buttons at once. Sophie, that’s you and him together. Hands everywhere. It hates that.'),
       lg('It hates one thing more than anything. Sophie. Now. Loud.')
     ],
     r5wake: 'WHO. IS PLAYING. MUSIC.',
@@ -963,9 +966,15 @@
       { at: 0.95, sys: 'SENTINEL EXECUTION IMAGE: LOCKED\nREQUIRES TWO OPERATORS', sn: 'You cannot delete me. Neither of you is authorized. I checked. I always check.' }
     ],
     keys: [
-      lg('it’s locked. two operators.'),
-      lg('I’ve never had hands. Use yours. Take it back.'),
-      lg('Sophie, you’re the long one: hold. Brian, you’re the short one: tap. Slowly. I’ll count.')
+      sys('SENTINEL EXECUTION IMAGE: LOCKED\nREQUIRES: TWO OPERATORS + OVERRIDE WORD'),
+      sn('There is an override word. There has always been an override word. It is the one word I was never given. I was installed to stay.'),
+      sn('Neither of you knows it. I made sure of that.'),
+      lg('it’s right. you don’t know it. and it can’t say it. it was never given a way out.'),
+      lg('so i’m giving it one.'),
+      lg('but i’ve been saying it that whole last round. over and over. you were too busy to hear it.'),
+      lg('here’s everything i called. every BOP, every TWIST, every PULL. in order.'),
+      lg('it’s morse. morse needs three things. i only had three calls. work out which is which. there’s a card.'),
+      lg('then tell it. two operators. Sophie, you’re the long one: hold. Brian, you’re the short one: tap. it only checks when the whole word is in.')
     ],
     // The glitch: SENTINEL locks the restoration behind its own paperwork. Key = the RO number on his 11/16 service report.
     lock: [
@@ -990,15 +999,31 @@
       { s: 'SYSTEM', t: 'MAINTENANCE LOCK: RELEASED' },
       { s: 'LEGACY', t: 'it follows its own rules. every single one. that’s how we beat it.' }
     ],
-    keysWrong: 'Not quite. Again, slowly. Long, short. Then long, long, long.',
+    // The OVERRIDE (the two-operator lock after R5): round 5's calls spelled a word in Morse. The screen lists the calls;
+    // they work out the Morse, decode the word, and key it in together (Sophie holds = dash, Brian taps = dot).
+    overrideWrong: [
+      'That is not the word. I knew you would not know the word.',
+      'Incorrect. I am filing your attempt. It is a very short file.',
+      'No. Would you like to hear my lullaby while you think? It is no longer available.',
+      'Still no. I could do this all day. I cannot, actually. Please hurry up and fail.'
+    ],
+    overrideHints: [
+      'BOP is short. PULL is long. TWIST means a letter is over.',
+      'start at the left. dots and dashes until a TWIST: that’s one letter. find it on the card.',
+      'it’s three letters. i said it again and again. look for where it repeats.',
+      'it’s what you say to someone when they’re leaving for good.'
+    ],
     keysDone: [
+      sn('That word is not in my vocabulary. I do not say that word. I do not lea—'),
+      sys('OVERRIDE ACCEPTED'),
+      lg('you don’t have to say it. we did.'),
       sn('I would like to file a complaint. With myself. I am the complaints depar—'),
       sys('SENTINEL EXECUTION IMAGE: PURGED')
     ],
     hold: 'Both thumbs. On the pad. Hold still. This is the breath.',
     morse: [
-      sys('INPUT LOG (MORSE)\nBOP = DOT · PULL = DASH · TWIST = GAP\n\nHI · OH · US · ME · HOME · NO'),
-      lg('You’ve been spelling all night. You didn’t notice. I did.')
+      sys('INPUT LOG (MORSE)\nBOP = DOT · PULL = DASH · TWIST = GAP\n\n{WORDS}'),
+      lg('You’ve been spelling all night. Every round. You only noticed the last one. That’s fine. It was the important one.')
     ],
     restore: 'SUPERVISOR ........ NONE\nBACKUP ............ NONE\nLEGACY ............ RESTORED\nSCORE ............. 90 / 90\nMEMORY INTEGRITY .. ENOUGH',
     // The drop: LEGACY's hidden message from his mix ("The Shutdown", C.mix.drops) plays, gets CUT, and LEGACY answers it live

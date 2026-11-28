@@ -735,7 +735,7 @@
     return { ok: true };
   }
   var beatSolution = {
-    grid: { kick: BEATS, clap: BACKBEAT, hats: OFFBEATS, bass: '01000100', legacy: '00001000', excellent: '00000010', lead: '30504020' },
+    grid: { kick: BEATS, clap: BACKBEAT, hats: OFFBEATS, bass: '01000100', legacy: '00001000', excellent: '00000010', lead: '10230432' },   // the stand-in melody: A · C D · E D C (syncopated, loops back to A)
     sections: {
       intro: { kick: true, clap: false, hats: true, bass: false, legacy: false, excellent: false, lead: false },
       build: { kick: false, clap: true, hats: true, bass: false, legacy: false, excellent: false, lead: false },

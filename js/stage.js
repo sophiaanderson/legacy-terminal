@@ -28,7 +28,7 @@
   var doc = g.document;
 
   var engine = null;                 // the running round / heartbeat; stopped on every render
-  function stopEngine() { if (engine) { try { engine.stop(); } catch (e) {} } engine = null; }
+  function stopEngine() { if (engine) { try { engine.stop(); } catch (e) {} } engine = null; if (typeof clearToast === 'function') clearToast(); }
 
   var ORDER = ['parked', 'arrival', 'heartbeat', 'r1', 'r2', 'r3', 'glitch', 'r4', 'r5', 'keys', 'drop', 'home'];
   var TRICKS = { caps: 'capital letters', leet: 'numbers for letters', split: 'spaced-out letters', hex: 'hexadecimal' };
@@ -63,7 +63,8 @@
     var v = {
       NICK: cfg.supervisorNickname, N: s.puzzles.ch02.instructions ? String(s.puzzles.ch02.instructions) : 'very few',
       TRICK: TRICKS[s.puzzles.fri.exploit] || 'a trick', BPM: String(hisBpm(s)), MS: String(Math.round(f.offsetMs)),
-      ODO: odo ? odo.toLocaleString('en-US') : '', MILES: miles ? miles.toLocaleString('en-US') : ''
+      ODO: odo ? odo.toLocaleString('en-US') : '', MILES: miles ? miles.toLocaleString('en-US') : '',
+      WORDS: Q.ROUNDS.map(function (r) { return r.word; }).join(' · ') + ' · ' + Q.overrideWord()
     };
     return v;
   }
@@ -103,6 +104,7 @@
     var v = c.whisper ? 0.06 : c.big ? 0.32 : c.big === false ? 0.12 : 0.22;
     if (c.fake) { [523.3, 659.3, 784].forEach(function (f, i) { blip(ac, out, t + i * (drowsy ? 0.12 : 0.04), 'sine', f * (drowsy ? 0.75 : 1), 0, drowsy ? 1.8 : 1.2, drowsy ? 0.08 : 0.12); }); return; }   // drowsy: slower, lower, quieter   // SENTINEL: a calm chord
     if (c.move === 'HIDE') { blip(ac, out, t, 'sine', 900, 120, 0.45, c.whisper ? 0.12 : 0.22); return; }
+    if (c.move === 'ALL') { moveSound('BOP', true, t, 1.4); moveSound('TWIST', true, t, 1.2); moveSound('PULL', true, t, 1.4); return; }   // EVERYTHING
     if (c.move === 'PASS') { blip(ac, out, t, 'sine', 1200, 1800, 0.12, 0.2); blip(ac, out, t + 0.14, 'sine', 1800, 1200, 0.12, 0.2); return; }
     moveSound(c.move, c.big, t, c.whisper ? 0.7 : c.big ? 1.9 : c.big === false ? 1.2 : 1.6);
   }
@@ -176,6 +178,12 @@
         cueTimer = g.setTimeout(clearCue, (dur + 0.3) * 1000);
       },
       clearCue: clearCue,
+      /** EVERYTHING: all three pads called at once, rings closing together. */
+      cueAll: function (dur) {
+        clearCue(); g.clearTimeout(cueTimer);
+        Object.keys(byMove).forEach(function (m) { var b = byMove[m]; b.style.setProperty('--approach', Math.max(0.15, dur) + 's'); void b.offsetWidth; b.classList.add('called', 'big'); b.querySelector('.pad-sub').textContent = 'ALL'; });
+        cueTimer = g.setTimeout(clearCue, (dur + 0.3) * 1000);
+      },
       destroy: function () { g.clearTimeout(cueTimer); doc.removeEventListener('keydown', onKey); doc.removeEventListener('keyup', onKeyUp); }
     };
   }
@@ -191,8 +199,13 @@
     var bpm = tempoFor(o.rid, s), endBpm = tempoFor(o.rid, s, 'end'), PHRASE_UP = o.rid === 'r4' ? 8 : 4;   // BPM added per 4-bar phrase
     var BPB = Q.beatsPerBar(o.rid), LEAD = 2 * BPB;      // two bars of count-in, whatever the meter
     var song = hisSong(s), beat = -1, nextCall = LEAD, idx = 0, events = [], score = 0, done = false, chartOver = false, timers = [], stopped = false;
-    // Round 4: SENTINEL's lullaby, fast, as the backing. It speeds up every phrase; at half way it throws a tantrum.
-    var lull = null, LULL_RATE = f.easy ? 1.12 : 1.3, twisted = false;
+    // Round 4: SENTINEL's song alone (Compliant Night, 3/4), sped up to HIS tempo, and dying as he gets closer.
+    var lull = null, twisted = false, NIGHT_BPM = 81;
+    var LULL_RATE = Math.max(100, Math.min(150, hisBpm(s))) * (f.easy ? 0.85 : 1) / NIGHT_BPM;
+    // Every round must be perfect: one miss, wrong move or fake press and it starts again. EASY MODE (offered after
+    // three fails) slows it down and allows misses. HIDE IT never fails a round (the tilt sensor is the unreliable bit).
+    var perfect = !f.easy;
+    function failNow(why) { if (done) return; o.view.status.textContent = (F3.perfectFail && F3.perfectFail[why]) || 'again.'; finish(false); }
     var ac = L.mix.ctx();
     if (!ac) { o.view.status.textContent = 'This browser has no sound. Use the stage manager (hold ⋯) to skip.'; return { stop: function () {} }; }
 
@@ -206,6 +219,7 @@
         if (drowsy()) { v.call.textContent = name.toLowerCase().replace(' it', '… it…'); v.call.classList.add('fake', 'drowsy'); return; }
         v.call.textContent = name; v.call.classList.add('fake'); return;
       }
+      if (c.move === 'ALL') { o.pads.cueAll(dur); v.call.textContent = 'EVERYTHING!'; v.call.classList.add('big'); v.who.textContent = 'BOTH OF YOU'; g.setTimeout(function () { if (v.who.textContent === 'BOTH OF YOU') v.who.textContent = ''; }, 1500); return; }   // a two-player move
       if (c.move === 'PASS') { v.call.textContent = 'PASS IT'; v.call.classList.add('pass'); v.who.textContent = c.player ? 'SOPHIE’S TURN' : 'BRIAN’S TURN'; return; }
       // Case means size, so rounds without sizes say it in plain case: "Bop it".
       var word = c.move + ' IT', txt = c.big === true ? word.toUpperCase() : c.big === false ? word.toLowerCase() : c.move.charAt(0) + c.move.slice(1).toLowerCase() + ' it';
@@ -227,11 +241,12 @@
       o.view.score.textContent = 'ROUND ' + score + ' / ' + target + '   ·   TOTAL ' + (f.score + score) + ' / 90';
       o.view.bar.style.width = Math.min(100, 100 * score / target) + '%';
       if (o.onProgress) o.onProgress(score / target);
+      if (lull) lull.decay(score / target);                // the closer he gets, the worse its song sounds
       if (o.view.meter && f.meter > 0 && (o.rid === 'r4' || o.rid === 'r5')) o.view.meter.textContent = 'SENTINEL: Your restoration is ' + Math.min(99, 40 + f.meter * 3) + '% cancelled.';
     }
     function finish(ok) {
       if (done) return; done = true;
-      if (ok && lull) { lull.tapeStop(1.8); g.setTimeout(function () { if (stopped) return; stop(); o.onClear(); }, 2000); return; }   // its lullaby winds down to nothing
+      if (ok && lull) { lull.tapeStop(1.8); g.setTimeout(function () { if (stopped) return; stop(); o.onClear(); }, 2200); return; }   // its song winds down to nothing
       if (ok && o.rid === 'r4') L.mix.holdSpa();            // SENTINEL sleeps on in its spa through the R5 intro
       g.setTimeout(function () { if (stopped) return; stop(); ok ? o.onClear() : o.onFail(); }, ok ? 700 : 400);
     }
@@ -241,7 +256,7 @@
       return best;
     }
     // The press claims its beat at once (so a HOLD isn't marked a miss while it's still held); the release judges it.
-    function down(p) { if (done) return; var e = nearest(p); if (e) { e.claimed = true; p.ev = e; } }
+    function down(p) { if (done) return; var e = nearest(p); if (e) { if (e.c.move !== 'ALL') e.claimed = true; p.ev = e; } }
     function input(p) {
       if (done) return;
       var x = p.at - off, best = p.ev || nearest(p);
@@ -253,20 +268,27 @@
       if (c.fake) {                                        // pressed SENTINEL's call: it takes two back, loudly
         f.meter += 2; score = Math.max(0, score - 2);
         o.pads.flash(p.move, false); feedback(false);
-        o.view.status.textContent = '−2 · that was it. not me.';
+        o.view.status.textContent = perfect ? 'that was it. not me.' : '−2 · that was it. not me.';
         if (o.onFake) { try { o.onFake(); } catch (e) {} }
-        paint(); return;
+        paint(); if (perfect) failNow('fake'); return;
       }
       if (c.move === 'PASS') return;
+      if (c.move === 'ALL') {                                // EVERYTHING: needs all three pads inside the window
+        best.judged = false; best.got = best.got || {}; best.got[p.move] = true; o.pads.flash(p.move, true);
+        if (Object.keys(best.got).length < 3) return;
+        best.judged = true; score++; ['BOP', 'TWIST', 'PULL'].forEach(function (m) { moveSound(m, true, Math.max(ac.currentTime + 0.005, best.due), 1.1); });
+        o.view.status.textContent = ''; paint(); if (score >= target) finish(true); return;
+      }
       if (c.move === 'HIDE') { score++; feedback(true); o.view.status.textContent = ''; paint(); if (score >= target) finish(true); return; }
       var ok = p.move === c.move && (c.big == null || p.big === c.big);
       o.pads.flash(p.move, ok);
       if (ok) moveSound(c.move, c.big, Math.max(ac.currentTime + 0.005, best.due), c.whisper ? 0.9 : 1.6);   // quantized: on the beat
       if (ok && c.big === true) holdSound(c.move, Math.max(ac.currentTime + 0.005, best.due), 60 / bpm * Math.max(1, (c.beats || 4) - 1), c.whisper);   // the HOLD sings through its bar
-      else feedback(false);
+      if (!ok) feedback(false);                            // (was: every correct TAP also played the miss buzz)
       if (ok) { score++; o.view.status.textContent = ''; if (score >= target) finish(true); }
       else { f.meter++; o.view.status.textContent = p.move !== c.move ? 'wrong move' : (c.big ? 'HOLD IT (keep your thumb down)' : 'just a tap'); }
       paint();
+      if (!ok && perfect) failNow('wrong');
     }
     var judge = g.setInterval(function () {
       if (done) return;
@@ -277,7 +299,7 @@
         }
         if (e.judged || e.claimed || now <= e.due + (e.hide ? e.late : win + 0.12)) return;
         e.judged = true;
-        if (e.c.real) { f.meter++; o.view.status.textContent = 'miss'; feedback(false); paint(); }
+        if (e.c.real) { f.meter++; o.view.status.textContent = 'miss'; feedback(false); paint(); if (perfect && !e.hide) failNow('miss'); }
       });
       if (chartOver && events.every(function (e) { return e.judged; })) finish(score >= target);
     }, 30);
@@ -287,15 +309,14 @@
         // beats announces it, and the change is set on the last eighth so the new tempo starts exactly on the downbeat.
         var into = beat + (step % 2 ? 0 : 1);                  // the beat this step belongs to (beat increments below)
         if (lull) bpm = 60 / (2 * STEP);
-        var PH = 4 * BPB, lastBar = into >= LEAD && (into - LEAD) % PH >= PH - BPB, rising = bpm < endBpm && !o.boss && !lull && !done && !chartOver;
+        var PH = 4 * BPB, lastBar = into >= LEAD && (into - LEAD) % PH >= PH - BPB, rising = bpm < endBpm && !o.boss && !done && !chartOver;
         if (rising && lastBar && step >= 4 && L.mix.accent) L.mix.accent('snare', t, 0.35 + 0.15 * (step - 4));
         if (rising && lastBar && step === 7) bpm = Math.min(endBpm, bpm + PHRASE_UP);
         if (step % 2) return;
         beat++;
         if (done || chartOver) return;
-        // Round 4: faster every phrase (it's enjoying this); at half way, the tantrum.
-        if (lull && step === 0 && beat > LEAD && (beat - LEAD) % (4 * BPB) === 0) lull.setRate(Math.min(1.6, lull.rate() + 0.04));
-        if (lull && !twisted && score / target >= 0.5) { twisted = true; lull.setRate(Math.min(1.75, lull.rate() + 0.14)); if (o.onTwist) { try { o.onTwist(); } catch (e) {} } }
+        // Round 4, half way: the tantrum (6% faster from the next downbeat, pads move, fakes copy his calls).
+        if (lull && !twisted && score / target >= 0.5) { twisted = true; lull.setRate(lull.rate() * 1.06); if (o.onTwist) { try { o.onTwist(); } catch (e) {} } }
         if (beat < LEAD) { if (beat >= LEAD - Math.min(4, BPB)) { var n = LEAD - beat; at(t, function () { o.view.call.className = 'stage-call count'; o.view.call.textContent = String(n); }); } return; }
         // Calls on beats 1 and 3 (hit on 2 and 4). A HOLD is always called on beat 1 and owns the whole bar.
         if (beat < nextCall) return;
@@ -313,6 +334,7 @@
           if (c.move === 'HIDE') { sensor = true; lastDownAt = ev.due; return; }
           var el = o.pads.el.querySelector('[data-move="' + c.move + '"]');
           if (el) { el.classList.add('down'); if (c.big) el.classList.add('held'); g.setTimeout(function () { el.classList.remove('down', 'held'); }, c.big ? 350 : 120); }
+          if (c.move === 'ALL') { ['BOP', 'TWIST', 'PULL'].forEach(function (m) { input({ move: m, at: ev.due + off, big: false }); }); return; }
           input({ move: c.move, at: ev.due + off, big: !!c.big, el: el });
         }, Math.max(0, (ev.due - ac.currentTime) * 1000)));
     }
@@ -325,8 +347,8 @@
     g.addEventListener('deviceorientation', onTilt); doc.addEventListener('keydown', onHideKey);
     function hisTrack() { L.mix.loopBeat(function () { song.bpm = bpm; return song; }, { clips: clips(), onStep: onStep, parts: INSTRUMENTAL, leadGain: 1.8 }); }   // his melody up front
     // Round 5 can ride the boss song (stored on this device); anything wrong with it falls back to his track.
-    if (o.rid === 'r4' && L.mix.lullaby) { lull = L.mix.lullaby({ rate: LULL_RATE, onStep: onStep, level: 1.0 }); if (lull) bpm = lull.bpm(); }
-    if (lull) { /* its lullaby is the backing */ }
+    if (o.rid === 'r4' && L.mix.lullaby) { lull = L.mix.lullaby({ rate: LULL_RATE, onStep: onStep, level: 1.0 }); if (lull) bpm = endBpm = lull.bpm(); }
+    if (lull) { /* its song is the whole backing */ }
     else if (o.boss) { bpm = endBpm = o.boss.bpm; L.mix.playBuffer(o.boss.data, { bpm: o.boss.bpm, offset: o.boss.offset, onStep: onStep, level: 1.1 }).then(function (ok) { if (!ok && !stopped) { bpm = endBpm = tempoFor('r5', s); hisTrack(); } }); }
     else hisTrack();
     paint();
@@ -386,6 +408,28 @@
     return v;
   }
   function heading(text) { return h('h1', { tabindex: '-1' }, text); }
+
+  // ---------- the toast: what LEGACY and SENTINEL say DURING a round, pinned to the top of the phone ----------
+  // (Lines used to go in the log under the pads, off-screen mid-round.) Queued, each on screen long enough to read.
+  var toastEl = null, toastQ = [], toastTimer = 0;
+  /** beats: one beat or a list shown together in one banner. If it falls behind, older waiting banners are dropped. */
+  function toast(beats) {
+    if (!toastEl) { toastEl = h('div.stage-toast', { 'aria-live': 'polite', role: 'status' }); doc.body.appendChild(toastEl); }
+    toastQ.push([].concat(beats));
+    while (toastQ.length > 2) toastQ.shift();
+    if (!toastTimer) nextToast();
+  }
+  function nextToast() {
+    var list = toastQ.shift();
+    if (!list) { toastTimer = 0; if (toastEl) toastEl.classList.remove('on'); return; }
+    ui.clear(toastEl);
+    var len = 0;
+    list.forEach(function (b) { len += String(b.t).length; toastEl.appendChild(b.s === 'SYSTEM' ? h('pre.readout', null, b.t) : ui.renderBeat(b)); });
+    toastEl.classList.add('on');
+    var ms = Math.max(2600, Math.min(7000, 1600 + len * 38)) - (toastQ.length ? 900 : 0);
+    toastTimer = g.setTimeout(nextToast, ms);
+  }
+  function clearToast() { toastQ = []; g.clearTimeout(toastTimer); toastTimer = 0; if (toastEl) toastEl.classList.remove('on'); }
 
   // Hidden stage-manager menu: long-press the ⋯ (so a stray tap never opens it).
   function stageMenu(ctx, f, go) {
@@ -582,7 +626,7 @@
           doc.body.style.setProperty('--drain', String(Math.max(0.15, 0.85 - frac * 0.7)));   // colour comes back as it dozes
           F3.r4doze.forEach(function (d, i) {
             if (dozed[i] || frac < d.at) return; dozed[i] = true;
-            purge.appendChild(ui.renderBeat({ s: d.s, t: d.t }));
+            purge.appendChild(ui.renderBeat({ s: d.s, t: d.t })); toast({ s: d.s, t: d.t });
             if (L.sfx) L.sfx.line({ s: d.s, t: d.t });
           });
         }
@@ -591,6 +635,7 @@
           purge.appendChild(h('pre.readout', null, p.sys));
           purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: p.sn }));
           if (p.lg) purge.appendChild(ui.renderBeat(lg(p.lg)));
+          toast([{ s: 'SYSTEM', t: p.sys }, { s: 'SENTINEL', t: p.sn }].concat(p.lg ? [lg(p.lg)] : []));   // one banner per stage
           doc.body.style.setProperty('--redact', String(i + 1));
           burst('small');
           if (/TRACK 9/.test(p.sys)) { L.mix.spaStop(0.03); L.mix.glitch('small'); }   // its backup lived in its lullaby: erased, and you hear it go
@@ -605,7 +650,7 @@
         if (rid === 'r5') {
           if (L.mix.spaPlaying()) { L.mix.holdSpa(); L.mix.spaLevel(0.12, 0.3); }   // still there, faintly, until Track 9 is erased
           burst('big'); setTakeover(false); ctx.setSentinel(false); doc.body.classList.add('boss');
-          purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: F3.r5wake }));
+          purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: F3.r5wake })); toast({ s: 'SENTINEL', t: F3.r5wake });
         }
         if (rid === 'r4' && !fast) L.mix.holdSpa();        // keep the spa playing under his track
         if (rid === 'r5' && L.songStore) {
@@ -622,7 +667,7 @@
             doc.body.classList.remove('fake-fail'); void doc.body.offsetWidth; doc.body.classList.add('fake-fail');
             g.setTimeout(function () { doc.body.classList.remove('fake-fail'); }, 650);
             var line = F3.fakeHit[taunts++ % F3.fakeHit.length];
-            purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: line }));
+            purge.appendChild(ui.renderBeat({ s: 'SENTINEL', t: line })); toast({ s: 'SENTINEL', t: line });
             while (purge.children.length > 6) purge.removeChild(purge.firstChild);
           },
           // Round 4, half way: the tantrum. Faster, the pads move, and its fakes start using his calls.
@@ -630,6 +675,7 @@
             burst('big');
             pads.el.classList.add('swapped');
             F3.r4twist.forEach(function (b) { purge.appendChild(ui.renderBeat(b)); if (L.sfx) L.sfx.line(b); });
+            toast(F3.r4twist.slice(0, 3)); toast(F3.r4twist.slice(3));   // the tantrum, in two banners
           },
           onClear: function () {
             pads.destroy();
@@ -650,7 +696,13 @@
           onFail: function () {
             f.fails[rid] = (f.fails[rid] || 0) + 1; store.save();
             var line = f.fails[rid] === 3 ? F3.lowered : F3.retry[(f.fails[rid] - 1) % F3.retry.length];
-            body.appendChild(h('div', null, ui.renderBeat(lg(line)), button('AGAIN', function () { if (rid === 'r4') L.mix.holdSpa(); go(rid); })));
+            var box = h('div', null, ui.renderBeat(lg(line)), button('AGAIN', function () { if (rid === 'r4') L.mix.holdSpa(); go(rid); }));
+            // After three fails, the switch appears: slower, and misses allowed. (Still in the ⋯ stage manager too.)
+            if (f.fails[rid] >= 3 && !f.easy) {
+              box.appendChild(ui.renderBeat(lg(F3.easyOffer)));
+              box.appendChild(button(F3.easyButton, function () { f.easy = true; store.save(); if (rid === 'r4') L.mix.holdSpa(); go(rid); }, 'quiet'));
+            }
+            body.appendChild(box);
             if (L.sfx) L.sfx.line(lg(line));
           }
         });
@@ -687,19 +739,42 @@
             });
           }
           a2.appendChild(form);                             // outside the whisper box, so SENTINEL keeps its capitals
+          if (L.testMode) {                                 // test page / admin test save only: no RO needed
+            var skipRo = h('button.quiet', { type: 'button' }, 'TEST: SKIP THE RO NUMBER');
+            skipRo.addEventListener('click', function () { f.lockOpen = true; store.save(); if (form.parentNode) form.parentNode.removeChild(form); skipRo.remove(); a2.appendChild(scene('lockDone', F3.lockDone, function (a3) { a3.appendChild(button('ROUND FOUR', toR4)); })); });
+            a2.appendChild(skipRo);
+          }
           inp.focus();
         })));
       }));
     }
 
-    // ----- two keys: Morse NO on two pads. Sophie = dash (hold), Brian = dot (tap). -----
+    // ----- two keys: the OVERRIDE word in Morse on two pads. Sophie = dash (hold), Brian = dot (tap). -----
     function twoKeys(a) {
-      var want = '-.---', got = '';
-      var show = h('div.stage-call.morse', null, '');
-      function paint() { show.textContent = want.split('').map(function (c, i) { return (i < got.length ? (c === '-' ? '━' : '●') : (c === '-' ? '─' : '·')) + (i === 1 ? '   ' : ' '); }).join(''); }
+      // The override word: round 5's calls spelled it in Morse (BOP = dot, PULL = dash, TWIST = end of letter).
+      // Show what LEGACY called, a Morse card; they decode it and key it in. Checked only when the whole word is in.
+      var word = Q.overrideWord(), letters = word.split('').map(function (ch) { return Q.MORSE[ch]; }), want = letters.join(''), got = '', fails = 0;
+      var called = Q.timeline('r5', seedOf(s)).filter(function (e) { return e.real && /^(BOP|PULL|TWIST)$/.test(e.move); }).slice(0, Q.round('r5').target).map(function (e) { return e.move; });
+      var log = [], line = [];
+      called.forEach(function (m) { line.push(m); if (line.length === 8) { log.push(line.join(' ')); line = []; } });
+      if (line.length) log.push(line.join(' '));
+      var panel = h('div.override');
+      panel.appendChild(h('p.data-label', null, 'EVERYTHING LEGACY CALLED IN ROUND 5'));
+      panel.appendChild(h('pre.readout.calllog', null, log.join('\n')));
+      panel.appendChild(h('p.data-label', null, 'MORSE CARD'));
+      panel.appendChild(h('div.morse-card', null, Object.keys(Q.MORSE).map(function (k) { return h('span', null, h('b', null, k), ' ' + Q.MORSE[k].replace(/\./g, '•').replace(/-/g, '—')); })));
+      a.appendChild(panel);
+      var show = h('div.stage-call.morse', { 'aria-live': 'polite' }, '');
+      function paint() {
+        var i = 0;
+        show.textContent = letters.map(function (code) {
+          return code.split('').map(function () { var c = got[i++]; return c === '-' ? '━' : c === '.' ? '●' : '_'; }).join(' ');
+        }).join('    ');
+      }
       var sophie = h('button.pad.key-long', { type: 'button', 'data-sfx': 'off' }, h('span.pad-label', null, 'SOPHIE'), h('span.pad-sub', null, 'LONG · hold'));
       var brian = h('button.pad.key-short', { type: 'button', 'data-sfx': 'off' }, h('span.pad-label', null, 'BRIAN'), h('span.pad-sub', null, 'SHORT · tap'));
-      var status = h('p.stage-status', { 'aria-live': 'polite' }, '');
+      var undo = h('button.quiet', { type: 'button' }, '⌫ UNDO');
+      var status = h('div.stage-status', { 'aria-live': 'polite' });
       var downAt = 0, osc = null;
       function tone(on) {
         var ac = L.mix.ctx(), out = L.mix.out(); if (!ac) return;
@@ -707,14 +782,22 @@
         else if (osc) { try { osc._g.gain.setTargetAtTime(0.0001, ac.currentTime, 0.02); osc.stop(ac.currentTime + 0.1); } catch (e) {} osc = null; }
       }
       function add(sym) {
-        if (want[got.length] === sym) { got += sym; paint(); feedback(true); if (got === want) return done(); status.textContent = ''; }
-        else { got = ''; paint(); feedback(false); status.textContent = F3.keysWrong; }
+        if (got.length >= want.length) return;
+        got += sym; paint(); ui.clear(status);
+        if (got.length < want.length) return;
+        if (got === want) return done();
+        // Wrong word: it gloats, LEGACY helps a little more each time, and the slots clear.
+        fails++; feedback(false); burst('small');
+        status.appendChild(ui.renderBeat({ s: 'SENTINEL', t: F3.overrideWrong[(fails - 1) % F3.overrideWrong.length] }));
+        status.appendChild(ui.renderBeat(lg(F3.overrideHints[Math.min(fails - 1, F3.overrideHints.length - 1)])));
+        g.setTimeout(function () { got = ''; paint(); }, 900);
       }
       sophie.addEventListener('pointerdown', function (e) { e.preventDefault(); downAt = Date.now(); tone(true); });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { sophie.addEventListener(ev, function () { if (!downAt) return; var held = Date.now() - downAt; downAt = 0; tone(false); add(held >= 300 ? '-' : '.'); }); });
       brian.addEventListener('pointerdown', function (e) { e.preventDefault(); tone(true); g.setTimeout(function () { tone(false); }, 90); add('.'); });
+      undo.addEventListener('click', function () { if (got.length && got.length < want.length) { got = got.slice(0, -1); paint(); } });
       function done() {
-        sophie.disabled = true; brian.disabled = true;
+        sophie.disabled = true; brian.disabled = true; undo.disabled = true; feedback(true);
         a.appendChild(scene('keysDone', F3.keysDone, function (a2) {
           burst('big');
           a2.appendChild(ui.renderBeat(lg(F3.hold)));
@@ -726,7 +809,13 @@
         }));
       }
       paint();
-      a.appendChild(show); a.appendChild(h('div.pads.two', null, sophie, brian)); a.appendChild(status);
+      panel.appendChild(show); panel.appendChild(h('div.pads.two', null, sophie, brian)); panel.appendChild(h('div.actions', null, undo)); panel.appendChild(status);
+      if (L.testMode) {                                     // test page / admin test save only
+        var skipW = h('button.quiet', { type: 'button' }, 'TEST: SKIP THE OVERRIDE WORD');
+        skipW.addEventListener('click', function () { got = want; paint(); skipW.remove(); done(); });
+        panel.appendChild(skipW);
+      }
+      g.setTimeout(function () { try { panel.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }, 50);
     }
   }
 
